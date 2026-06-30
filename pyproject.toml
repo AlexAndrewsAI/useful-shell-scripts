@@ -1,6 +1,6 @@
 [project]
 name = "useful-shell-scripts"
-version = "0.1.0"
+dynamic = ["version"]  # Version is read from __init__.py by hatch
 description = "A collection of practical shell scripts and Python development tools"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -68,6 +68,13 @@ dev = [
     "pureshellcheck>=0.2.1",
     "pip-audit",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]  # Configures hatch to read version from __init__.py
+path = "useful_shell_scripts/__init__.py"
 
 [tool.uv.sources]
 keepass-wrapper = { git = "https://github.com/AlexAndrewsAI/keepass-wrapper.git" }

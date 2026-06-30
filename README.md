@@ -97,7 +97,6 @@ The Python environment is configured with `uv` package manager. If you have conf
 **Manual setup:**
 
 ```bash
-cd python
 uv sync
 source .venv/bin/activate
 ```
@@ -302,7 +301,7 @@ If `yq` is installed and a config file is provided with a `venv` field:
 
 ## Python Environment
 
-The `python/pyproject.toml` defines a comprehensive development environment suitable for data science, automation, and general development.
+The `pyproject.toml` in the repository root defines a comprehensive development environment suitable for data science, automation, and general development. The Python package `useful_shell_scripts/` contains minimal source code for testing and validation utilities.
 
 ### Core Dependencies
 
@@ -328,12 +327,9 @@ The `python/pyproject.toml` defines a comprehensive development environment suit
 ### Setup
 
 ```bash
-cd python
 # Install with uv (recommended)
 uv sync
-
-# Or with pip
-pip install -r requirements.txt  # if you generate one
+source .venv/bin/activate
 ```
 
 ### Custom Git Dependencies
