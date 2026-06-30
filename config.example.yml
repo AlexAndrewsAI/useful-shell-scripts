@@ -1,0 +1,13 @@
+# Directory bookmarks - creates goto- aliases when yq is installed
+bookmarks:
+  tmp: /tmp
+  downloads: ~/Downloads
+  local-bin: ~/.local/bin
+
+
+venv:
+  location: .venv # interpret as relative to the config directory if applicable
+  add: # packages to add to the project (runs uv add [package])
+    # - sqlalchemy
+  remove: # packages to remove from the project (runs uv remove [package])
+    # - sqlalchemy # this undoes the previous as an example
