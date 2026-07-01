@@ -1,0 +1,139 @@
+[project]
+name = "useful-shell-scripts"
+dynamic = ["version"]  # Version is read from __init__.py by hatch
+description = "A collection of practical shell scripts and Python development tools"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "AlexAndrewsAI", email = "alex.andrews.ai@protonmail.com"}
+]
+keywords = ["shell", "scripts", "automation", "bash", "python"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "bitmath>=2.1.1",
+    "black>=26.5.1",
+    "desktop-notifier>=6.2.0",
+    "cryptography==49.0.0",
+    "edge-tts>=7.2.8",
+    "eyed3>=0.9.6",
+    "hmmlearn>=0.2.5",
+    "imblearn>=0.0",
+    "keyboard>=0.13.5",
+    "matplotlib>=3.4.2",
+    "numpy>=1.20.3",
+    "openpyxl>=3.1.5",
+    "pandas>=1.2.4",
+    "pillow>=12.2.0",
+    "pipreqs>=0.5.0",
+    "plotly>=5.3.1",
+    "psutil>=7.2.2",
+    "pyaudioanalysis>=0.3.14",
+    "pyautogui>=0.9.54",
+    "pycryptomator>=1.15",
+    "pydantic>=2.13.4",
+    "pydub>=0.25.1",
+    "pykeepass>=4.1.1.post1",
+    "pynput==1.6.0",
+    "pyperclip>=1.11.0",
+    "python-package-template",
+    "pyyaml>=6.0.3",
+    "rclone-python>=0.1.24",
+    "requests>=2.34.2",
+    "schedule>=1.2.2",
+    "scikit-learn>=0.24.2",
+    "scipy>=1.6.3",
+    "selenium>=4.44.0",
+    "simplejson>=3.16.0",
+    "tqdm>=4.52.0",
+    "mount-encrypted-filesystem",
+    "backup-keepass-unlock",
+    "scheduler-run",
+    "timetracker-utils",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=7.1.0",
+    "mypy>=2.1.0",
+    "ruff>=0.15.20",
+    "pureshellcheck>=0.2.1",
+    "pip-audit",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]  # Configures hatch to read version from __init__.py
+path = "useful_shell_scripts/__init__.py"
+
+[tool.uv.sources]
+keepass-wrapper = { git = "https://github.com/AlexAndrewsAI/keepass-wrapper.git" }
+python-package-template = { git = "https://github.com/AlexAndrewsAI/python-package-template.git" }
+mount-encrypted-filesystem = { git = "https://github.com/AlexAndrewsAI/mount-encrypted-filesystem.git" }
+backup-keepass-unlock = { git = "https://github.com/AlexAndrewsAI/backup-keepass-unlock.git" }
+scheduler-run = { git = "https://github.com/AlexAndrewsAI/scheduler-run.git", branch = "main" }
+timetracker-utils = { git = "https://github.com/AlexAndrewsAI/timetracker-utils.git" }
+
+[project.urls]
+Homepage = "https://github.com/AlexAndrewsAI/useful-shell-scripts"
+Repository = "https://github.com/AlexAndrewsAI/useful-shell-scripts.git"
+Documentation = "https://github.com/AlexAndrewsAI/useful-shell-scripts#readme"
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors (catch syntax and basic style errors)
+    "F",   # pyflakes (undefined names, unused imports - catches common bugs)
+    "W",   # pycodestyle warnings (style warnings that might indicate issues)
+    "I",   # isort (import sorting - keeps imports organized)
+    "UP",  # pyupgrade (modernize Python syntax - uses modern Python features)
+    "ARG", # flake8-unused-arguments (catches unused function arguments)
+    "RUF", # ruff-specific rules (ruff-specific optimizations and checks)
+]
+# Note: Excluded docstring (D), security (S), bugbear (B), logging (G), comprehensions (C4),
+# pytest-style (PT), and simplify (SIM) rules from template to focus on core quality for this
+# shell-script-focused repository with test code, avoiding excessive strictness on test files.
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",  # Allow assert statements in tests (standard pytest practice)
+    "E501",  # Allow long lines in tests (bash commands in subprocess calls often exceed line length)
+    "W293",  # Allow blank lines with whitespace in tests (multi-line bash scripts embedded in tests)
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true  # Warn when returning Any from function (catches type leaks)
+warn_unused_configs = true  # Warn about unused mypy configuration (catches config errors)
+# disallow_untyped_defs = true  # Disabled for gradual adoption - this repo is primarily shell scripts with test code
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=tests --cov-report=term-missing --cov-fail-under=80"  # 80% threshold balances quality with practicality for shell script test repo
+
+[tool.coverage.run]
+source = ["tests", "useful_shell_scripts"]  # Measure test coverage and any future Python package code (minimal package created to suppress coverage.py module-not-imported warning)
+parallel = true  # Run coverage in parallel for faster execution
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",  # Explicitly marked lines to exclude from coverage
+    "if __name__ == .__main__.:",  # Test execution blocks (not part of test logic)
+    "if TYPE_CHECKING:",  # Type checking imports (not runtime code)
+    "@pytest.mark.parametrize",  # Parameterized test decorators (not test logic)
+    "def check_bash_present",  # Helper function for test conditions (not test logic)
+]
+
