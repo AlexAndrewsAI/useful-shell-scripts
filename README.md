@@ -1,6 +1,6 @@
 # Useful Shell Scripts
 
-A collection of practical shell scripts and Python development tools for system administration, development workflows, and productivity enhancement. This is primarily set up for running [AlexAndrewsAI](https://github.com/AlexAndrewsAI/)'s repos.
+A compilation of shell scripts and Python development tools. This is primarily set up for running [AlexAndrewsAI](https://github.com/AlexAndrewsAI/)'s repos.
 
 ## Overview
 

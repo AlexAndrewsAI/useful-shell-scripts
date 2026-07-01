@@ -1,4 +1,4 @@
-
+# shellcheck shell=bash
 alias psfind="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/psfind.sh"
 alias pskill="psfind -k"
 
@@ -27,11 +27,13 @@ repeat() {
     command=$(echo "$command" | xargs)
 
     # Check if the command or alias is found
-    if ! type "$command" &> /dev/null; then
-        if alias | grep -q "^alias $command="; then
-            echo "Alias '$command' found."
+    # Extract the first word (the actual command) for validation
+    cmd_name=$(echo "$command" | awk '{print $1}')
+    if ! type "$cmd_name" &> /dev/null; then
+        if alias | grep -q "^alias $cmd_name="; then
+            echo "Alias '$cmd_name' found."
         else
-            echo "Error: Command or Alias '$command' not found."
+            echo "Error: Command or Alias '$cmd_name' not found." >&2
             exit 1
         fi
     fi
@@ -74,7 +76,7 @@ pstoggle() {
         PID=$(psfind "$PID" | head -1 | awk '{print $1}')
     fi
 
-    fout="$LOGDIR/.pstoggle.pid"
+    fout="/tmp/.pstoggle.pid"
     # If none specified get highest cpu process
     if [[ "$PID" == "" ]]; then
         # Read PID if file exists and toggle that process
@@ -86,7 +88,7 @@ pstoggle() {
             rm -f "$fout"
             ps "$PID"
             kill -SIGCONT "$PID"
-            return 1
+            return 0
         else
             # PID=$(ps -eo pid,%cpu --sort=-%cpu | head -n 2 | tail -n 1 | awk '{print $1}')
             PID=$(top -b -n 1 | grep " $USER " | head -1 | awk '{print $1}')

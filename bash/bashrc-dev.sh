@@ -122,6 +122,7 @@ if [ "$(command -v git)" ]; then
 
     # Unzip a single zip file in current directory, replace git files, and optionally commit
     # Usage: git-unzip-update
+    # Environment variable: GIT_AUTO_COMMIT (set to "yes" to auto-commit without prompt)
     git-unzip-update() {
         if [ $(ls -1 *.zip 2>/dev/null | wc -l) -eq 1 ]; then
             for f in `git ls-files`; do
@@ -137,7 +138,13 @@ if [ "$(command -v git)" ]; then
             unzip "$z"
             rm "$z"
             # Get user confirmation to add and commit
-            read -p "Unzipped files. Do you want to add and commit them? (y/N): " CONFIRMATION
+            if [ -t 0 ]; then
+                read -p "Unzipped files. Do you want to add and commit them? (y/N): " CONFIRMATION
+            elif [ "$GIT_AUTO_COMMIT" = "yes" ]; then
+                CONFIRMATION="y"
+            else
+                CONFIRMATION="n"
+            fi
             if [[ "$CONFIRMATION" =~ ^[yY]$ ]]; then
                 echo "Adding and committing changes..."
                 git add --all
@@ -161,6 +168,7 @@ if [ "$(command -v docker)" ]; then
     # Delete Docker images with <none> repository, with confirmation
     # Checks for dependent containers first before deleting images
     # Usage: docker-delete-images-search
+    # Environment variable: DOCKER_AUTO_DELETE (set to "yes" to auto-delete without prompts)
     docker-delete-images-search() {
         ids=$(docker images --format "{{.ID}} {{.Repository}}" | awk -v term="<none>" '$2 ~ term {print $1}')
         tosearch=""
@@ -173,7 +181,13 @@ if [ "$(command -v docker)" ]; then
         if [ $(echo -e "$containers" | wc -l) -gt 1 ]; then
             echo "================= Dependent Containers ======================"
             echo -e "$containers"
-            read -p "Delete CONTAINERS using these images? (y/N): " CONFIRMATION
+            if [ -t 0 ]; then
+                read -p "Delete CONTAINERS using these images? (y/N): " CONFIRMATION
+            elif [ "$DOCKER_AUTO_DELETE" = "yes" ]; then
+                CONFIRMATION="y"
+            else
+                CONFIRMATION="n"
+            fi
             if [[ "$CONFIRMATION" =~ ^[yY]$ ]]; then
                 echo "Deleting containers..."
                 for c in $(docker container ls -a | grep -E "$tosearch" | awk '{print $1}'); do
@@ -188,7 +202,13 @@ if [ "$(command -v docker)" ]; then
 
         echo "================= Found Images ======================"
         docker image ls | grep -E "IMAGE ID$tosearch"
-        read -p "Are you sure you want to delete these images? (y/N): " CONFIRMATION
+        if [ -t 0 ]; then
+            read -p "Are you sure you want to delete these images? (y/N): " CONFIRMATION
+        elif [ "$DOCKER_AUTO_DELETE" = "yes" ]; then
+            CONFIRMATION="y"
+        else
+            CONFIRMATION="n"
+        fi
 
         if [[ "$CONFIRMATION" =~ ^[yY]$ ]]; then
             echo "Deleting images..."
@@ -239,10 +259,10 @@ if [ "$(command -v kubectl)" ]; then
     # Execute a command in a Kubernetes pod by name pattern
     # Usage: kubernetes-exec <pod_name_pattern>
     kubernetes-exec() {
-        echo $1
-        temp=`kubectl get pods | grep $1 | awk '{print $1}'`
-        echo "kubectl exec -it $temp bash"
-        k exec -it $temp bash
+        echo "$1"
+        temp=`kubectl get pods | grep "$1" | awk '{print $1}'`
+        echo "kubectl exec -it \"$temp\" bash"
+        k exec -it "$temp" bash
     }
 
     # Delete all kubernetes resources

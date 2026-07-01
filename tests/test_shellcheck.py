@@ -20,15 +20,11 @@ SHELL_FILES = [
 
 
 @pytest.mark.parametrize("shell_file", SHELL_FILES)
-@pytest.mark.xfail(
-    reason="Shell scripts have existing linting issues - informational only"
-)
 def test_shellcheck(shell_file):
     """Test shell script for common issues using pureshellcheck.
 
-    This test is marked as xfail since the shell scripts have existing
-    linting issues. The test runs to provide information about issues
-    but does not fail the build.
+    This test ensures shell scripts have no errors. Warnings and style
+    issues are printed for visibility but do not cause test failure.
     """
     path = Path(shell_file)
     if not path.exists():

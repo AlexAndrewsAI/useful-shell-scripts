@@ -8,8 +8,8 @@ CONFIG_FILE="$1"
 
 # Require config file argument
 if [[ -z "$CONFIG_FILE" ]]; then
-    echo "Error: Config file argument is required"
-    echo "Usage: source bashrc-extra.sh <config_file>"
+    echo "Error: Config file argument is required" >&2
+    echo "Usage: source bashrc-extra.sh <config_file>" >&2
     return 1
 fi
 
@@ -167,10 +167,22 @@ if [ "$(command -v rclone)" ]; then
     # Backup rclone configuration with encryption
     # Prompts for password, decrypts config, backs it up, and re-encrypts
     # Usage: rclone-backup-config
+    # Environment variable: RCLONE_PASSWORD (optional, avoids interactive prompt)
     rclone-backup-config() {
         fin=$(rclone config file | tail -1)
-        read -r -s -p "Enter Password: " pswd
-        echo
+        
+        # Check for TTY or environment variable
+        if [ -t 0 ]; then
+            read -r -s -p "Enter Password: " pswd
+            echo
+        elif [ -n "$RCLONE_PASSWORD" ]; then
+            pswd="$RCLONE_PASSWORD"
+        else
+            echo "Error: No TTY available and RCLONE_PASSWORD not set" >&2
+            echo "Usage: RCLONE_PASSWORD=your_password rclone-backup-config" >&2
+            return 1
+        fi
+        
         echo "$pswd" | rclone-decrypt-config
         cp "$fin" "./rclone-$(date +%F).conf"
         echo "config file backed up to: ./rclone-$(date +%F).conf"

@@ -23,7 +23,7 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
                     expanded_value="${value/#\~/$HOME}"
                     # Check if the value is a directory
                     if [[ ! -d "$expanded_value" ]]; then
-                        echo "Error: Bookmark '$key' value '$value' is not a directory"
+                        echo "Error: Bookmark '$key' value '$value' is not a directory" >&2
                         bookmark_error=1
                     else
                         valid_keys+=("$key")
@@ -110,12 +110,27 @@ basenames() {
 
 # Go back through directory structure and give read permissions
 # Input is list of files or nothing (defaults to current directory)
-# Usage: chmod-recursive-give-access [files...]
+# Usage: chmod-recursive-give-access [-b|--base BASE_DIR] [files...]
 chmod-recursive-give-access() {
+    local BASE_DIR="$HOME"
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -b|--base)
+                BASE_DIR="$2"
+                shift 2
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+    
     if [[ "$1" == "" ]]; then
         fls="."
     else
-        fls=$*
+        fls="$*"
     fi
     for f in $fls; do
         echo "$f"
