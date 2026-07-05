@@ -196,3 +196,5 @@ if [ "$(command -v rclone)" ]; then
     }
 fi
 #endregion Rclone utilities
+
+echo "Sourced ${BASH_SOURCE[0]}"

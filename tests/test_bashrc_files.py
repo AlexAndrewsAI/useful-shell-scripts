@@ -542,3 +542,110 @@ def test_bashrc_files_devnull_redirect_function_execution(bashrc_files_script_pa
 
     assert result.returncode == 0, f"devnull-redirect function failed: {result.stderr}"
     assert "test" in result.stdout, "Should output the command being run"
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_bashrc_files_bookmark_env_var(bashrc_files_script_path, temp_bookmark_dirs):
+    """Test that bookmarks create environment variables with DIR_ prefix."""
+    # Create a temporary config file
+    temp_config = tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False)
+    temp_config.write("# Test config file\n")
+    temp_config.write("bookmarks:\n")
+    temp_config.write(f'  test1: "{temp_bookmark_dirs["test1"]}"\n')
+    temp_config.write(f'  test2: "{temp_bookmark_dirs["test2"]}"\n')
+    temp_config.close()
+
+    try:
+        # Test that environment variables are created
+        result = subprocess.run(
+            [
+                "/bin/bash",
+                "-c",
+                f"FILE_BASHRC_CONFIG={temp_config.name} source {bashrc_files_script_path} && echo $DIR_TEST1",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+        assert temp_bookmark_dirs["test1"] in result.stdout, (
+            "DIR_TEST1 environment variable should be set"
+        )
+
+        # Test second bookmark
+        result = subprocess.run(
+            [
+                "/bin/bash",
+                "-c",
+                f"FILE_BASHRC_CONFIG={temp_config.name} source {bashrc_files_script_path} && echo $DIR_TEST2",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+        assert temp_bookmark_dirs["test2"] in result.stdout, (
+            "DIR_TEST2 environment variable should be set"
+        )
+    finally:
+        if os.path.exists(temp_config.name):
+            os.unlink(temp_config.name)
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_bashrc_files_bookmark_env_var_naming_convention(
+    bashrc_files_script_path, temp_bookmark_dirs
+):
+    """Test that bookmark names with hyphens create env vars with underscores."""
+    # Create a temporary config file with hyphenated bookmark name
+    temp_config = tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False)
+    temp_config.write("# Test config file\n")
+    temp_config.write("bookmarks:\n")
+    temp_config.write(f'  my-special-folder: "{temp_bookmark_dirs["test1"]}"\n')
+    temp_config.close()
+
+    try:
+        # Test that environment variable name is converted correctly
+        result = subprocess.run(
+            [
+                "/bin/bash",
+                "-c",
+                f"FILE_BASHRC_CONFIG={temp_config.name} source {bashrc_files_script_path} && echo $DIR_MY_SPECIAL_FOLDER",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+        assert temp_bookmark_dirs["test1"] in result.stdout, (
+            "DIR_MY_SPECIAL_FOLDER environment variable should be set for my-special-folder"
+        )
+    finally:
+        if os.path.exists(temp_config.name):
+            os.unlink(temp_config.name)
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_bashrc_files_goto_useful_bash_scripts_env_var(bashrc_files_script_path):
+    """Test that goto-useful-bash-scripts also exports DIR_USEFUL_BASH_SCRIPTS."""
+    result = subprocess.run(
+        [
+            "/bin/bash",
+            "-c",
+            f"source {bashrc_files_script_path} && echo $DIR_USEFUL_BASH_SCRIPTS",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    # The env var should be set and contain a path
+    assert result.stdout.strip() != "", (
+        "DIR_USEFUL_BASH_SCRIPTS environment variable should be set"
+    )

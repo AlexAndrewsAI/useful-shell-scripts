@@ -38,11 +38,15 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
             return 1
         fi
         
-        # Second pass: create aliases only for valid bookmarks
+        # Second pass: create aliases and export env vars only for valid bookmarks
         for i in "${!valid_keys[@]}"; do
             key="${valid_keys[i]}"
             value="${valid_values[i]}"
+            # Create goto- alias
             eval "alias goto-${key}='cd \"${value}\"'"
+            # Create DIR_ environment variable (convert key to uppercase and replace hyphens with underscores)
+            env_name="DIR_$(echo "$key" | tr '[:lower:]' '[:upper:]' | tr '-' '_')"
+            export "$env_name"="$value"
         done
     fi
 fi
@@ -51,10 +55,12 @@ fi
 # The path should be set when the script is sourced
 if [ -n "$SCRIPT_DIR" ]; then
     alias goto-useful-bash-scripts="cd \"$SCRIPT_DIR/..\""
+    export DIR_USEFUL_BASH_SCRIPTS="$SCRIPT_DIR/.."
 else
     # Fallback if SCRIPT_DIR is not set
     script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
     alias goto-useful-bash-scripts="cd \"$script_dir/..\""
+    export DIR_USEFUL_BASH_SCRIPTS="$script_dir/.."
 fi
 
 # File viewing and listing aliases

@@ -1,4 +1,4 @@
-# Set DIR_VENV from config file
+# Set DIR_PYTHON_VENV from config file
 if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_CONFIG" ]; then
     # Check if venv is configured as an object with location field
     venv_location=$(yq '.venv.location' "$FILE_BASHRC_CONFIG" 2>/dev/null)
@@ -16,7 +16,7 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
         fi
         
         # Export the venv path
-        export DIR_VENV="$venv_path"
+        export DIR_PYTHON_VENV="$venv_path"
     fi
 fi
 
@@ -31,15 +31,15 @@ if [ "$(command -v uv)" ]; then
     alias venv-which="echo $VIRTUAL_ENV"
     # Deactivate the current virtual environment
     alias venv-deactivate="deactivate"
-    # Activate the main venv specified in config (DIR_VENV)
-    if [ -n "$DIR_VENV" ]; then
-        alias venv-main="source $DIR_VENV/bin/activate"
+    # Activate the main venv specified in config (DIR_PYTHON_VENV)
+    if [ -n "$DIR_PYTHON_VENV" ]; then
+        alias venv-main="source $DIR_PYTHON_VENV/bin/activate"
     fi
 fi
 
 # Go to the main venv directory
-if [ -n "$DIR_VENV" ]; then
-    alias goto-venv-main="cd $DIR_VENV"
+if [ -n "$DIR_PYTHON_VENV" ]; then
+    alias goto-venv-main="cd $DIR_PYTHON_VENV"
 fi
 
 # General
