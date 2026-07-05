@@ -77,7 +77,7 @@ else
 fi
 
 output=$(git ls-files | grep -E "$grep_pattern" | while read -r file; do
-    if [ -s "$file" ] && [ -n "$(cat "$file" | tr -d ' \n\t')" ]; then
+    if [ -s "$file" ] && [ -n "$(tr -d ' \n\t' < "$file")" ]; then
       echo "# $file"
       echo '```'
       cat "$file"

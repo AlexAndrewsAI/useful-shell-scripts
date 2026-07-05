@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Bookmark aliases from config file
 if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_CONFIG" ]; then
     # Create goto- aliases for each bookmark in config
@@ -38,11 +39,15 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
             return 1
         fi
         
-        # Second pass: create aliases only for valid bookmarks
+        # Second pass: create aliases and export env vars only for valid bookmarks
         for i in "${!valid_keys[@]}"; do
             key="${valid_keys[i]}"
             value="${valid_values[i]}"
+            # Create goto- alias
             eval "alias goto-${key}='cd \"${value}\"'"
+            # Create DIR_ environment variable (convert key to uppercase and replace hyphens with underscores)
+            env_name="DIR_$(echo "$key" | tr '[:lower:]' '[:upper:]' | tr '-' '_')"
+            export "$env_name"="$value"
         done
     fi
 fi
@@ -50,17 +55,19 @@ fi
 # Manual goto entry for useful-bash-scripts root directory
 # The path should be set when the script is sourced
 if [ -n "$SCRIPT_DIR" ]; then
-    alias goto-useful-bash-scripts="cd \"$SCRIPT_DIR/..\""
+    alias goto-useful-bash-scripts='cd "$SCRIPT_DIR/.."'
+    export DIR_USEFUL_BASH_SCRIPTS="$SCRIPT_DIR/.."
 else
     # Fallback if SCRIPT_DIR is not set
     script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-    alias goto-useful-bash-scripts="cd \"$script_dir/..\""
+    alias goto-useful-bash-scripts='cd "$script_dir/.."'
+    export DIR_USEFUL_BASH_SCRIPTS="$script_dir/.."
 fi
 
 # File viewing and listing aliases
 alias t="tail -f"
 alias l="less"
-alias topu="top -u $USER"
+alias topu='top -u "$USER"'
 alias ll="ls -lha"
 alias la="ls -a"
 alias ld="ls -d"
@@ -103,7 +110,7 @@ alias grepfind=findgrep
 # Get basenames of files/directories
 # Usage: basenames <paths...>
 basenames() {
-    for f in $(ls -d "$@"); do
+    for f in "$@"; do
         basename "$f"
     done
 }
@@ -159,7 +166,7 @@ chmod-recursive-locked-user-only() {
 # Go to file's directory
 # Usage: cdd <file_path>
 cdd() {
-    cd "$(realpath "$(dirname "$1")")"
+    cd "$(realpath "$(dirname "$1")")" || return
 }
 
 # Move a file to a directory and create a symlink to it

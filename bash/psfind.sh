@@ -60,11 +60,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
-    -*|--*)
-      echo "Unknown option $1"
-      exit 1
-      ;;
     *)
+      if [[ "$1" == -* ]]; then
+        echo "Unknown option $1"
+        exit 1
+      fi
       POSITIONAL_ARGS+=("$1") # save positional arg
       shift # past argument
       ;;
@@ -113,7 +113,7 @@ if [[ $line_count -gt 0 ]]; then
             p=$(echo "$line" | awk '{print $1}')
             if [[ "$KILL" == true ]]; then
                 echo "KILLING $p"
-                kill -9 "$p"
+                kill -9 "$p" || true
             else
                 echo "$line"
                 echo "$p"

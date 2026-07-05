@@ -1,4 +1,5 @@
-# Set DIR_VENV from config file
+# shellcheck shell=bash
+# Set DIR_PYTHON_VENV from config file
 if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_CONFIG" ]; then
     # Check if venv is configured as an object with location field
     venv_location=$(yq '.venv.location' "$FILE_BASHRC_CONFIG" 2>/dev/null)
@@ -16,7 +17,7 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
         fi
         
         # Export the venv path
-        export DIR_VENV="$venv_path"
+        export DIR_PYTHON_VENV="$venv_path"
     fi
 fi
 
@@ -28,18 +29,18 @@ if [ "$(command -v uv)" ]; then
     # Create virtual environment in current directory if missing and activate it
     alias venv-here="[ ! -d .venv ] && uv venv; source .venv/bin/activate"
     # Display the current virtual environment path
-    alias venv-which="echo $VIRTUAL_ENV"
+    alias venv-which='echo "$VIRTUAL_ENV"'
     # Deactivate the current virtual environment
     alias venv-deactivate="deactivate"
-    # Activate the main venv specified in config (DIR_VENV)
-    if [ -n "$DIR_VENV" ]; then
-        alias venv-main="source $DIR_VENV/bin/activate"
+    # Activate the main venv specified in config (DIR_PYTHON_VENV)
+    if [ -n "$DIR_PYTHON_VENV" ]; then
+        alias venv-main='source "$DIR_PYTHON_VENV/bin/activate"'
     fi
 fi
 
 # Go to the main venv directory
-if [ -n "$DIR_VENV" ]; then
-    alias goto-venv-main="cd $DIR_VENV"
+if [ -n "$DIR_PYTHON_VENV" ]; then
+    alias goto-venv-main='cd "$DIR_PYTHON_VENV"'
 fi
 
 # General
@@ -114,9 +115,9 @@ if [ "$(command -v git)" ]; then
     git-pull-all-branches() {
         current_branch=$(git branch --show-current)
         for branch in $(git branch -r | grep -v '\->'); do
-            git checkout --track $branch || git checkout ${branch#origin/} && git pull
+            git checkout --track "$branch" || git checkout "${branch#origin/}" && git pull
         done
-        git checkout $current_branch
+        git checkout "$current_branch"
     }
 
 
@@ -124,22 +125,24 @@ if [ "$(command -v git)" ]; then
     # Usage: git-unzip-update
     # Environment variable: GIT_AUTO_COMMIT (set to "yes" to auto-commit without prompt)
     git-unzip-update() {
-        if [ $(ls -1 *.zip 2>/dev/null | wc -l) -eq 1 ]; then
-            for f in `git ls-files`; do
+        # shellcheck disable=SC2012
+        if [ "$(ls -1 ./*.zip 2>/dev/null | wc -l)" -eq 1 ]; then
+            for f in $(git ls-files); do
                 # Skip files that start with .git
                 if [[ "$f" == ".git"* ]]; then
                     echo "Skipping git file: $f"
                     continue
                 fi
-                rm $f
+                rm "$f"
             done
-            z=$(ls -1 *.zip | head -1)
+            # shellcheck disable=SC2012
+            z=$(ls -1 ./*.zip | head -1)
             # Unzip the file
             unzip "$z"
             rm "$z"
             # Get user confirmation to add and commit
             if [ -t 0 ]; then
-                read -p "Unzipped files. Do you want to add and commit them? (y/N): " CONFIRMATION
+                read -r -p "Unzipped files. Do you want to add and commit them? (y/N): " CONFIRMATION
             elif [ "$GIT_AUTO_COMMIT" = "yes" ]; then
                 CONFIRMATION="y"
             else
@@ -175,14 +178,14 @@ if [ "$(command -v docker)" ]; then
         for i in $ids; do
             tosearch="$tosearch|$i"
         done
-        echo $SEARCH $tosearch
+        echo "$SEARCH" "$tosearch"
         containers=$(docker container ls -a | grep -E "CONTAINER ID$tosearch")
 
-        if [ $(echo -e "$containers" | wc -l) -gt 1 ]; then
+        if [ "$(echo -e "$containers" | wc -l)" -gt 1 ]; then
             echo "================= Dependent Containers ======================"
             echo -e "$containers"
             if [ -t 0 ]; then
-                read -p "Delete CONTAINERS using these images? (y/N): " CONFIRMATION
+                read -r -p "Delete CONTAINERS using these images? (y/N): " CONFIRMATION
             elif [ "$DOCKER_AUTO_DELETE" = "yes" ]; then
                 CONFIRMATION="y"
             else
@@ -191,7 +194,7 @@ if [ "$(command -v docker)" ]; then
             if [[ "$CONFIRMATION" =~ ^[yY]$ ]]; then
                 echo "Deleting containers..."
                 for c in $(docker container ls -a | grep -E "$tosearch" | awk '{print $1}'); do
-                    docker rm $c
+                    docker rm "$c"
                 done
                 echo "Deletion complete."
             else
@@ -203,7 +206,7 @@ if [ "$(command -v docker)" ]; then
         echo "================= Found Images ======================"
         docker image ls | grep -E "IMAGE ID$tosearch"
         if [ -t 0 ]; then
-            read -p "Are you sure you want to delete these images? (y/N): " CONFIRMATION
+            read -r -p "Are you sure you want to delete these images? (y/N): " CONFIRMATION
         elif [ "$DOCKER_AUTO_DELETE" = "yes" ]; then
             CONFIRMATION="y"
         else
@@ -212,7 +215,7 @@ if [ "$(command -v docker)" ]; then
 
         if [[ "$CONFIRMATION" =~ ^[yY]$ ]]; then
             echo "Deleting images..."
-            docker rmi $ids
+            docker rmi "$ids"
             echo "Deletion complete."
             echo
         else
@@ -230,7 +233,7 @@ if [ "$(command -v docker)" ]; then
         # Loop through each image
         for image in $images; do
             # Check if the image has the "latest" tag
-            image_name=$(echo "$image" | sed 's/:.*//')
+            image_name="${image%%:*}"
             if docker images --format '{{.Repository}}:latest' | grep -q "^${image_name}:latest\$"; then
                 echo "Skipping image with latest tag: $image"
             else
@@ -243,8 +246,8 @@ if [ "$(command -v docker)" ]; then
     # Start and attach to a Docker container
     # Usage: docker-start-attach <container_id>
     docker-start-attach() {
-        docker start $1
-        docker attach $1
+        docker start "$1"
+        docker attach "$1"
     }
 
 fi
@@ -260,7 +263,7 @@ if [ "$(command -v kubectl)" ]; then
     # Usage: kubernetes-exec <pod_name_pattern>
     kubernetes-exec() {
         echo "$1"
-        temp=`kubectl get pods | grep "$1" | awk '{print $1}'`
+        temp=$(kubectl get pods | grep "$1" | awk '{print $1}')
         echo "kubectl exec -it \"$temp\" bash"
         k exec -it "$temp" bash
     }
@@ -277,13 +280,15 @@ if [ "$(command -v kubectl)" ]; then
         fi
         tofind=$1
         tmpfile=$(mktemp)
-        kubectl get all | awk '{print $1}'  > $tmpfile
-        for line in $(grep "$tofind" $tmpfile); do
+        kubectl get all | awk '{print $1}'  > "$tmpfile"
+        # shellcheck disable=SC2013
+        for line in $(grep "$tofind" "$tmpfile"); do
             kubectl delete "$line"
         done
-        rm $tmpfile
+        rm "$tmpfile"
     }
     # Load all YAML files in current directory into kubernetes
+    # shellcheck disable=SC2139
     alias kubernetes-yaml-load="for f in *.yaml; do kubectl apply -f $f; done"
 fi
 #endregion
@@ -298,7 +303,7 @@ str2array() {
     local -a temp
     # Remove leading/trailing [], assuming this is python syntax
     # If you really need not this you can try "[[one], [two]]"
-    if [[ "$value" == [* ]] && [[ "$value" == *] ]]; then
+    if [[ "$value" == '['* ]] && [[ "$value" == *']' ]]; then
         # Set new variable to everything in between
         value="${value:1:-1}"  # Remove first and last character
     fi
@@ -312,7 +317,7 @@ str2array() {
             # Strip both the leading and trailing quotes
             strippedValue="${currentValue:1:-1}"
             # Assign the stripped value back to the array
-            temp[$i]="$strippedValue"
+            temp[i]="$strippedValue"
         fi
     done
     eval "$key=(\"\${temp[@]}\")"

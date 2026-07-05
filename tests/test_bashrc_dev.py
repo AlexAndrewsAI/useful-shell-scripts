@@ -2,7 +2,9 @@
 """Test suite for bashrc-dev.sh script."""
 
 import os
+import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -305,6 +307,39 @@ def test_bashrc_dev_conditional_vi_alias(bashrc_dev_script_path):
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
+def test_bashrc_dev_yaml2bash_without_yq(bashrc_dev_script_path):
+    """Test yaml2bash function when yq is NOT available (should NOT define the function)."""
+    # Mock environment without yq by overriding the command function to return failure for yq
+    mock_script = f"""
+    # Override command to return failure for yq
+    command() {{
+        if [[ "$1" == "-v" && "$2" == "yq" ]]; then
+            return 1
+        else
+            /usr/bin/command "$@"
+        fi
+    }}
+    
+    # Source the bashrc script
+    source {bashrc_dev_script_path}
+    
+    # Check if yaml2bash is defined
+    type yaml2bash 2>/dev/null || echo 'FUNCTION_NOT_FOUND'
+    """
+
+    result = subprocess.run(
+        ["/bin/bash", "-c", mock_script],
+        capture_output=True,
+        text=True,
+    )
+
+    # Without yq, yaml2bash should NOT be defined
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    assert "FUNCTION_NOT_FOUND" in result.stdout, (
+        "yaml2bash should NOT be defined when yq is not available"
+    )
+
+
 def test_bashrc_dev_yaml2bash_with_yq(bashrc_dev_script_path):
     """Test yaml2bash function when yq is available."""
     # Check if yq is available in system or ~/.local/bin
@@ -372,6 +407,41 @@ def test_bashrc_dev_git_functions_without_git(bashrc_dev_script_path):
     assert "FUNCTION_NOT_FOUND" in result.stdout, (
         "git-update should not be defined without git"
     )
+
+
+@pytest.fixture
+def mock_yq_env():
+    """Create a temporary mock yq command and environment for testing."""
+    mock_dir = tempfile.mkdtemp()
+    yq_script = os.path.join(mock_dir, "yq")
+    with open(yq_script, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("# Mock yq that returns simulated output\n")
+        f.write('echo "mock yq: $@"\n')
+    os.chmod(yq_script, 0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{mock_dir}:{env['PATH']}"
+    yield env
+    if os.path.exists(mock_dir):
+        shutil.rmtree(mock_dir)
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_bashrc_dev_yaml2bash_with_mock_yq(bashrc_dev_script_path, mock_yq_env):
+    """Test yaml2bash function when yq is available (mock)."""
+    result = subprocess.run(
+        ["/bin/bash", "-c", f"source {bashrc_dev_script_path} && type yaml2bash"],
+        capture_output=True,
+        text=True,
+        env=mock_yq_env,
+    )
+
+    assert result.returncode == 0, (
+        f"yaml2bash function should be defined: {result.stderr}"
+    )
+    assert "yaml2bash" in result.stdout, "yaml2bash function should be defined"
 
 
 @pytest.mark.skipif(

@@ -132,6 +132,7 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
                 fi
                 
                 # Sync dependencies
+                export UV_PROJECT_ENVIRONMENT="$venv_path"
                 echo "Syncing dependencies from pyproject.toml..."
                 if ! uv sync --python "$venv_path/bin/python"; then
                     echo "Warning: uv sync failed, recreating venv..."

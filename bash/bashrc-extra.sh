@@ -38,8 +38,11 @@ fi
 export FILE_BASHRC_CONFIG="$CONFIG_FILE"
 
 # Source themed bashrc files
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/bashrc-files.sh"
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/bashrc-processes.sh"
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/bashrc-dev.sh"
 
 # System
@@ -73,7 +76,7 @@ if [ "$(command -v pacman)" ]; then
         git clone "https://aur.archlinux.org/$*.git"
         cd "$*" || return
         makepkg -si
-        cd "$home"
+        cd "$home" || return
     }
 fi
 #endregion Arch Linux utilities
@@ -196,3 +199,5 @@ if [ "$(command -v rclone)" ]; then
     }
 fi
 #endregion Rclone utilities
+
+echo "Sourced ${BASH_SOURCE[0]}"

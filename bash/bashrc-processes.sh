@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck disable=SC2139
 alias psfind="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/psfind.sh"
 alias pskill="psfind -k"
 
