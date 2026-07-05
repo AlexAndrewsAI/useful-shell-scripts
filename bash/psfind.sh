@@ -60,11 +60,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
-    -*|--*)
-      echo "Unknown option $1"
-      exit 1
-      ;;
     *)
+      if [[ "$1" == -* ]]; then
+        echo "Unknown option $1"
+        exit 1
+      fi
       POSITIONAL_ARGS+=("$1") # save positional arg
       shift # past argument
       ;;
