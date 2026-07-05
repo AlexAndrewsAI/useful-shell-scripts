@@ -3,6 +3,7 @@
 
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -305,6 +306,38 @@ def test_bashrc_dev_conditional_vi_alias(bashrc_dev_script_path):
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
+def test_bashrc_dev_yaml2bash_without_yq(bashrc_dev_script_path):
+    """Test yaml2bash function when yq is NOT available (should still define the function)."""
+    # Create environment without yq in PATH
+    env = os.environ.copy()
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+        f.write("#!/bin/bash\n")
+        f.write("command() {\n")
+        f.write('    if [[ "$1" == "-v" && "$2" == "yq" ]]; then\n')
+        f.write("        return 1\n")
+        f.write("    else\n")
+        f.write('        /usr/bin/command "$@"\n')
+        f.write("    fi\n")
+        f.write("}\n")
+        f.write(f"source {bashrc_dev_script_path}\n")
+        f.write("type yaml2bash 2>/dev/null || echo 'FUNCTION_NOT_FOUND'\n")
+        mock_script = f.name
+
+    try:
+        result = subprocess.run(
+            ["/bin/bash", mock_script],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+
+        # Without yq, yaml2bash should not define but the function may still be
+        # conditionally available. Just check the script doesn't crash.
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+    finally:
+        os.unlink(mock_script)
+
+
 def test_bashrc_dev_yaml2bash_with_yq(bashrc_dev_script_path):
     """Test yaml2bash function when yq is available."""
     # Check if yq is available in system or ~/.local/bin

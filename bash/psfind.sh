@@ -113,7 +113,7 @@ if [[ $line_count -gt 0 ]]; then
             p=$(echo "$line" | awk '{print $1}')
             if [[ "$KILL" == true ]]; then
                 echo "KILLING $p"
-                kill -9 "$p"
+                kill -9 "$p" || true
             else
                 echo "$line"
                 echo "$p"

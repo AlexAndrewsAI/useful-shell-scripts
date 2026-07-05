@@ -193,6 +193,15 @@ def test_setup_script_nonexistent_config(setup_script_path, temp_home, monkeypat
 
 
 def test_bash_presence_warning():
-    """Test that we warn if bash is not present."""
-    if not check_bash_present():
-        pytest.warns(UserWarning, match="/bin/bash not found")
+    """Test check_bash_present detects missing bash correctly."""
+    from unittest import mock
+
+    # Test detection when bash is NOT present
+    with mock.patch("tests.test_setup.os.path.exists", return_value=False):
+        assert not check_bash_present(), (
+            "Should return False when /bin/bash doesn't exist"
+        )
+
+    # Test detection when bash IS present
+    with mock.patch("tests.test_setup.os.path.exists", return_value=True):
+        assert check_bash_present(), "Should return True when /bin/bash exists"

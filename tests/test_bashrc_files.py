@@ -63,6 +63,29 @@ def check_bash_present():
     return os.path.exists("/bin/bash")
 
 
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_bashrc_files_with_temp_config_file(bashrc_files_script_path, temp_config_file):
+    """Test that script handles a config file with non-existent bookmark directories."""
+    # The temp_config_file fixture creates bookmarks pointing to /tmp/test1 and /tmp/test2
+    # which don't exist, so the script should report an error
+    result = subprocess.run(
+        [
+            "/bin/bash",
+            "-c",
+            f"FILE_BASHRC_CONFIG={temp_config_file} source {bashrc_files_script_path} 2>&1; echo 'EXIT_CODE='$?",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    # Should report that bookmark directories don't exist
+    assert "not a directory" in result.stdout.lower() or "Error" in result.stdout, (
+        "Script should report error for non-existent bookmark directories"
+    )
+
+
 def test_bashrc_files_script_exists(bashrc_files_script_path):
     """Test that bashrc-files.sh script exists."""
     assert bashrc_files_script_path.exists(), (
