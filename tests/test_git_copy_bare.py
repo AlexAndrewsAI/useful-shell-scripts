@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -14,6 +15,31 @@ import pytest
 def git_copy_bare_script_path():
     """Path to the git-copy-bare.sh script."""
     return Path(__file__).parent.parent / "bash" / "git-copy-bare.sh"
+
+
+@pytest.fixture
+def mock_git_env():
+    """Create a temporary mock git command and environment for testing."""
+    mock_dir = tempfile.mkdtemp()
+    git_script = os.path.join(mock_dir, "git")
+    with open(git_script, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("# Mock git that returns simulated output\n")
+        f.write('case "$1" in\n')
+        f.write("    ls-tree)\n")
+        f.write('        echo "test1.txt"\n')
+        f.write('        echo "subdir/test2.txt"\n')
+        f.write("        ;;\n")
+        f.write("    *)\n")
+        f.write('        echo "mock git: $@"\n')
+        f.write("        ;;\n")
+        f.write("esac\n")
+    os.chmod(git_script, 0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{mock_dir}:{env['PATH']}"
+    yield env
+    if os.path.exists(mock_dir):
+        shutil.rmtree(mock_dir)
 
 
 @pytest.fixture
@@ -194,8 +220,6 @@ def test_git_copy_bare_default_input(git_copy_bare_script_path, temp_git_repo):
 
 def test_bash_presence_warning():
     """Test check_bash_present detects missing bash correctly."""
-    from unittest import mock
-
     # Test detection when bash is NOT present
     with mock.patch("tests.test_git_copy_bare.os.path.exists", return_value=False):
         assert not check_bash_present(), (
@@ -205,3 +229,42 @@ def test_bash_presence_warning():
     # Test detection when bash IS present
     with mock.patch("tests.test_git_copy_bare.os.path.exists", return_value=True):
         assert check_bash_present(), "Should return True when /bin/bash exists"
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_git_copy_bare_with_mock_git(git_copy_bare_script_path, mock_git_env):
+    """Test git-copy-bare.sh behavior when git is available (mock)."""
+    input_dir = tempfile.mkdtemp()
+    output_dir = tempfile.mkdtemp()
+
+    try:
+        # Create test files in input directory to match mock git output
+        (Path(input_dir) / "test1.txt").write_text("content1")
+        subdir = Path(input_dir) / "subdir"
+        subdir.mkdir()
+        (subdir / "test2.txt").write_text("content2")
+
+        result = subprocess.run(
+            [
+                "/bin/bash",
+                str(git_copy_bare_script_path),
+                "-i",
+                input_dir,
+                output_dir,
+            ],
+            capture_output=True,
+            text=True,
+            env=mock_git_env,
+        )
+
+        # Should succeed with mock git available
+        assert result.returncode == 0, f"Script failed with mock git: {result.stderr}"
+        # Should contain file names from mock git output
+        assert "test1.txt" in result.stdout or "subdir/test2.txt" in result.stdout, (
+            "Should contain file names from mock git output"
+        )
+    finally:
+        shutil.rmtree(input_dir)
+        shutil.rmtree(output_dir)

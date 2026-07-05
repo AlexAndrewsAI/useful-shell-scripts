@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -14,6 +15,42 @@ import pytest
 def git2markdown_script_path():
     """Path to the git2markdown.sh script."""
     return Path(__file__).parent.parent / "bash" / "git2markdown.sh"
+
+
+@pytest.fixture
+def mock_git_env():
+    """Create a temporary mock git command and environment for testing."""
+    mock_dir = tempfile.mkdtemp()
+    git_script = os.path.join(mock_dir, "git")
+    with open(git_script, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("# Mock git that returns simulated output\n")
+        f.write('case "$1" in\n')
+        f.write("    ls-files)\n")
+        f.write('        echo "test.py"\n')
+        f.write('        echo "test.md"\n')
+        f.write('        echo "test.txt"\n')
+        f.write("        ;;\n")
+        f.write("    rev-parse)\n")
+        f.write('        case "$2" in\n')
+        f.write("            --show-toplevel)\n")
+        f.write('        echo "$(pwd)"\n')
+        f.write("                ;;\n")
+        f.write("            *)\n")
+        f.write('        echo "mock git: $@"\n')
+        f.write("                ;;\n")
+        f.write("        esac\n")
+        f.write("        ;;\n")
+        f.write("    *)\n")
+        f.write('        echo "mock git: $@"\n')
+        f.write("        ;;\n")
+        f.write("esac\n")
+    os.chmod(git_script, 0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{mock_dir}:{env['PATH']}"
+    yield env
+    if os.path.exists(mock_dir):
+        shutil.rmtree(mock_dir)
 
 
 @pytest.fixture
@@ -253,8 +290,6 @@ def test_git2markdown_whitespace_only_file_filtering(
 
 def test_bash_presence_warning():
     """Test check_bash_present detects missing bash correctly."""
-    from unittest import mock
-
     # Test detection when bash is NOT present
     with mock.patch("tests.test_git2markdown.os.path.exists", return_value=False):
         assert not check_bash_present(), (
@@ -264,3 +299,44 @@ def test_bash_presence_warning():
     # Test detection when bash IS present
     with mock.patch("tests.test_git2markdown.os.path.exists", return_value=True):
         assert check_bash_present(), "Should return True when /bin/bash exists"
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_git2markdown_with_mock_git(git2markdown_script_path, mock_git_env):
+    """Test git2markdown.sh behavior when git is available (mock)."""
+    # Create a mock xclip to prevent hanging
+    mock_dir = tempfile.mkdtemp()
+    mock_xclip_path = Path(mock_dir) / "xclip"
+    mock_xclip_path.write_text("#!/bin/bash\n# Mock xclip that does nothing\nexit 0\n")
+    mock_xclip_path.chmod(0o755)
+
+    # Create test files to match mock git output
+    (Path(mock_dir) / "test.py").write_text('print("hello")')
+    (Path(mock_dir) / "test.md").write_text("# Title")
+    (Path(mock_dir) / "test.txt").write_text("text content")
+
+    env = mock_git_env.copy()
+    env["PATH"] = f"{mock_dir}:{env.get('PATH', '')}"
+
+    try:
+        result = subprocess.run(
+            ["/bin/bash", str(git2markdown_script_path)],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=10,
+            cwd=mock_dir,
+        )
+
+        # Should succeed with mock git available
+        assert result.returncode == 0, f"Script failed with mock git: {result.stderr}"
+        # Should contain file names from mock git output
+        assert (
+            "test.py" in result.stdout
+            or "test.md" in result.stdout
+            or "test.txt" in result.stdout
+        ), "Should contain file names from mock git output"
+    finally:
+        shutil.rmtree(mock_dir)

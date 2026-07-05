@@ -2,8 +2,11 @@
 """Test suite for psfind.sh script."""
 
 import os
+import shutil
 import subprocess
+import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -12,6 +15,26 @@ import pytest
 def psfind_script_path():
     """Path to the psfind.sh script."""
     return Path(__file__).parent.parent / "bash" / "psfind.sh"
+
+
+@pytest.fixture
+def mock_ps_env():
+    """Create a temporary mock ps command and environment for testing."""
+    mock_dir = tempfile.mkdtemp()
+    ps_script = os.path.join(mock_dir, "ps")
+    with open(ps_script, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("# Mock ps that returns simulated process output\n")
+        f.write('echo "PID TTY          TIME CMD"\n')
+        f.write('echo "1234 pts/0    00:00:01 bash"\n')
+        f.write('echo "5678 pts/0    00:00:02 python"\n')
+        f.write('echo "9012 pts/0    00:00:03 grep"\n')
+    os.chmod(ps_script, 0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{mock_dir}:{env['PATH']}"
+    yield env
+    if os.path.exists(mock_dir):
+        shutil.rmtree(mock_dir)
 
 
 def check_bash_present():
@@ -194,8 +217,6 @@ def test_psfind_combined_options(psfind_script_path):
 
 def test_bash_presence_warning():
     """Test check_bash_present detects missing bash correctly."""
-    from unittest import mock
-
     # Test detection when bash is NOT present
     with mock.patch("tests.test_psfind.os.path.exists", return_value=False):
         assert not check_bash_present(), (
@@ -205,3 +226,21 @@ def test_bash_presence_warning():
     # Test detection when bash IS present
     with mock.patch("tests.test_psfind.os.path.exists", return_value=True):
         assert check_bash_present(), "Should return True when /bin/bash exists"
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_psfind_with_mock_ps(psfind_script_path, mock_ps_env):
+    """Test psfind.sh behavior when ps is available (mock)."""
+    result = subprocess.run(
+        ["/bin/bash", str(psfind_script_path), "bash"],
+        capture_output=True,
+        text=True,
+        env=mock_ps_env,
+    )
+
+    # Should succeed with mock ps available
+    assert result.returncode == 0, f"Script failed with mock ps: {result.stderr}"
+    # Should show "Finding" in output
+    assert "Finding" in result.stdout, "Should show 'Finding' in output"
