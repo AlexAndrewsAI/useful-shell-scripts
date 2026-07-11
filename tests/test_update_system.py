@@ -12,117 +12,11 @@ from tests.test_utils import check_bash_present
 
 SCRIPT_DIR = Path(__file__).parent.parent / "bash"
 UPDATE_SYSTEM = SCRIPT_DIR / "update-system.sh"
-
-# The embedded Python YAML parser extracted from update-system.sh so we can
-# test config parsing without sourcing the whole script (which runs sudo etc.).
-YAML_PARSER = r"""
-import sys
-
-def parse_scalar(s):
-    s = s.strip()
-    if s in ("true", "True", "yes", "Yes"):
-        return True
-    if s in ("false", "False", "no", "No"):
-        return False
-    if len(s) >= 2 and s[0] == s[-1] and s[0] in ("'", '"'):
-        return s[1:-1]
-    return s
-
-def parse_mapping(lines, index, indent):
-    obj = {}
-    while index < len(lines):
-        line = lines[index]
-        if not line.strip() or line.strip().startswith("#"):
-            index += 1
-            continue
-        cur = len(line) - len(line.lstrip(" "))
-        if cur < indent:
-            break
-        if indent >= 0 and cur > indent:
-            index += 1
-            continue
-        content = line.strip()
-        key, _, val = content.partition(":")
-        key = key.strip()
-        val = val.strip()
-        if val in ("[]", "[ ]"):
-            obj[key] = []
-            index += 1
-        elif val == "":
-            j = index + 1
-            while j < len(lines) and (
-                not lines[j].strip() or lines[j].strip().startswith("#")
-            ):
-                j += 1
-            if j < len(lines):
-                nindent = len(lines[j]) - len(lines[j].lstrip(" "))
-                ncontent = lines[j].strip()
-                if nindent > cur:
-                    if ncontent.startswith("- "):
-                        child, index = parse_list(lines, j, nindent)
-                        obj[key] = child
-                        continue
-                    child, index = parse_mapping(lines, j, nindent)
-                    obj[key] = child
-                    continue
-            obj[key] = None
-            index = j
-        else:
-            obj[key] = parse_scalar(val)
-            index += 1
-    return obj, index
-
-def parse_list(lines, index, indent):
-    lst = []
-    while index < len(lines):
-        line = lines[index]
-        if not line.strip() or line.strip().startswith("#"):
-            index += 1
-            continue
-        cur = len(line) - len(line.lstrip(" "))
-        if cur < indent:
-            break
-        if cur > indent:
-            index += 1
-            continue
-        content = line.strip()
-        if content.startswith("- "):
-            lst.append(parse_scalar(content[2:]))
-            index += 1
-        else:
-            break
-    return lst, index
-
-def emit(obj, prefix):
-    out = []
-    for key, value in obj.items():
-        var = "CONFIG_" + prefix + key.upper().replace("-", "_").replace(".", "_")
-        if isinstance(value, bool):
-            out.append(f'{var}={"true" if value else "false"}')
-        elif isinstance(value, list):
-            out.append(f'{var}=()')
-            for item in value:
-                out.append(f'{var}+=({item!r})')
-        elif isinstance(value, dict):
-            out.extend(emit(value, prefix + key.upper().replace("-", "_").replace(".", "_") + "_"))
-        elif value is None:
-            out.append(f'{var}=')
-        else:
-            out.append(f'{var}={value!r}')
-    return out
-
-path = sys.argv[1]
-with open(path) as fh:
-    text = fh.read()
-
-root, _ = parse_mapping(text.splitlines(), 0, -1)
-for line in emit(root, ""):
-    print(line)
-"""
+YAML_PARSER_SCRIPT = SCRIPT_DIR / "yaml_parser.py"
 
 
 def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
-    """Run the embedded YAML parser and return a dict of CONFIG_ vars."""
+    """Run the shared YAML parser and return a dict of CONFIG_ vars."""
     script = (
         "CONFIG_TMP_FILES=()\n"
         "load_config() {\n"
@@ -130,9 +24,7 @@ def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
         "    local tmp_config\n"
         '    tmp_config="$(mktemp)"\n'
         '    CONFIG_TMP_FILES+=("$tmp_config")\n'
-        '    python3 - "$config_file" <<\'PYEOF\' > "$tmp_config"\n'
-        + YAML_PARSER
-        + "\nPYEOF\n"
+        f'    python3 "{YAML_PARSER_SCRIPT}" "$config_file" > "$tmp_config"\n'
         '    source "$tmp_config"\n'
         "}\n"
         f'load_config "{config_path}"\n'
@@ -451,9 +343,7 @@ def test_update_system_config_parsing_with_packages():
             "    local tmp_config\n"
             '    tmp_config="$(mktemp)"\n'
             '    CONFIG_TMP_FILES+=("$tmp_config")\n'
-            '    python3 - "$config_file" <<\'PYEOF\' > "$tmp_config"\n'
-            + YAML_PARSER
-            + "\nPYEOF\n"
+            f'    python3 "{YAML_PARSER_SCRIPT}" "$config_file" > "$tmp_config"\n'
             '    source "$tmp_config"\n'
             "}\n"
             f'load_config "{tmp.name}"\n'
