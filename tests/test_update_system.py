@@ -276,21 +276,51 @@ def test_update_system_unknown_option(update_system_script_path):
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
 def test_update_system_config_not_found(update_system_script_path):
-    """Test that missing config file causes an error."""
-    result = subprocess.run(
-        [
-            "/bin/bash",
-            str(update_system_script_path),
-            "-c",
-            "/nonexistent/path/config.yml",
-        ],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode != 0, "Missing config should cause non-zero exit"
-    assert "not found" in result.stdout.lower() or "error" in result.stdout.lower(), (
-        "Should print error about missing config"
-    )
+    """Test that missing .config-location.dat causes an error."""
+    dat_path = update_system_script_path.parent.parent / ".config-location.dat"
+    dat_existed = dat_path.exists()
+    if dat_existed:
+        dat_path.unlink()
+    try:
+        result = subprocess.run(
+            ["/bin/bash", str(update_system_script_path)],
+            capture_output=True,
+            text=True,
+            cwd="/tmp",
+        )
+        assert result.returncode != 0, (
+            "Missing .config-location.dat should cause non-zero exit"
+        )
+        assert (
+            ".config-location.dat" in result.stdout
+            or "setup.sh" in result.stdout.lower()
+        ), "Error message should mention .config-location.dat and setup.sh"
+    finally:
+        if dat_existed:
+            dat_path.touch()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_config_dat_points_nowhere(update_system_script_path):
+    """Test that a .config-location.dat pointing to a missing file causes an error."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dat_path = os.path.join(tmpdir, ".config-location.dat")
+        with open(dat_path, "w") as f:
+            f.write("/nonexistent/config.yml")
+        result = subprocess.run(
+            ["/bin/bash", str(update_system_script_path)],
+            capture_output=True,
+            text=True,
+            cwd=tmpdir,
+        )
+        assert result.returncode != 0, (
+            "Config file not found should cause non-zero exit"
+        )
+        assert (
+            "not found" in result.stdout.lower() or "error" in result.stdout.lower()
+        ), "Error message should mention config file not found"
 
 
 @pytest.mark.skipif(

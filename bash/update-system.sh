@@ -36,13 +36,12 @@ OPTIONS:
     -h, --help          Show this help message and exit
     -i, --init          Force initialization of pacman keyring
                         (Use this first time after a system update)
-    -c, --config FILE   Path to the YAML configuration file
-                        (default: update-system.yml next to this script)
+    -c, --config FILE   Override config path from .config-location.dat
 
 EXAMPLES:
-    $0                          # Normal execution
+    $0                          # Normal execution (reads .config-location.dat)
     $0 --init                   # Force keyring initialization
-    $0 -c my-config.yml         # Use a custom config file
+    $0 -c my-config.yml         # Override config location
     $0 -h                       # Display this help message
 
 REQUIREMENTS:
@@ -53,10 +52,9 @@ REQUIREMENTS:
     - Internet connection
 
 CONFIGURATION:
-    Copy update-system.example.yml to update-system.yml and edit the
-    sections (steamos, pacman, aur, flatpak, git,
-    decky, distrobox, shortcuts) to match your system.
-    Python venv and bash config are handled by setup.sh.
+    Requires .config-location.dat (created by setup.sh) which points to
+    the YAML config file. Run setup.sh first, or manually create this
+    file containing the path to your config.
 
 EOF
 }
@@ -353,8 +351,22 @@ set -- "${POSITIONAL_ARGS[@]}"
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_TMP_FILES=()
 
+# Read config location from .config-location.dat (created by setup.sh)
+DAT_FILE="$SCRIPTS_DIR/../.config-location.dat"
+if [ ! -f "$DAT_FILE" ]; then
+    echo "ERROR: .config-location.dat not found at $DAT_FILE"
+    echo "Run setup.sh first, or create this file containing the path to your config."
+    exit 1
+fi
+
 if [ -z "$CONFIG_FILE" ]; then
-    CONFIG_FILE="$SCRIPTS_DIR/update-system.yml"
+    CONFIG_FILE="$(cat "$DAT_FILE")"
+fi
+
+# Validate the config file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: Config file not found: $CONFIG_FILE"
+    exit 1
 fi
 
 load_config "$CONFIG_FILE"
@@ -394,7 +406,7 @@ run_flatpak "${CONFIG_FLATPAK[@]}"
 run_pacman "${CONFIG_PACMAN[@]}"
 
 # Run setup.sh for bash configuration and Python venv
-"$SCRIPTS_DIR/../setup.sh"
+"$SCRIPTS_DIR/../setup.sh" "$CONFIG_FILE"
 
 # Install AUR packages
 aur_install "${CONFIG_AUR[@]}"

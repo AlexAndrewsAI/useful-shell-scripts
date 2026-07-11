@@ -187,3 +187,36 @@ def test_setup_script_nonexistent_config(setup_script_path, temp_home, monkeypat
     assert "does not exist" in result.stdout or "Error" in result.stdout, (
         "Error message should mention config file does not exist"
     )
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_setup_script_writes_config_location(
+    setup_script_path, example_config_path, temp_home, monkeypatch
+):
+    """Test that setup.sh writes config location to .config-location.dat."""
+    monkeypatch.setenv("HOME", temp_home)
+    monkeypatch.setenv("SKIP_VENV_SETUP", "1")
+
+    # setup.sh writes .config-location.dat next to itself
+    dat_path = setup_script_path.parent / ".config-location.dat"
+    dat_path.unlink(missing_ok=True)
+
+    result = subprocess.run(
+        ["/bin/bash", str(setup_script_path), str(example_config_path)],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "HOME": temp_home, "SKIP_VENV_SETUP": "1"},
+    )
+
+    assert result.returncode == 0, f"Setup script failed: {result.stderr}"
+    assert dat_path.exists(), ".config-location.dat should be created next to setup.sh"
+
+    dat_content = dat_path.read_text().strip()
+    assert dat_content == str(example_config_path), (
+        f".config-location.dat should contain {example_config_path}, got {dat_content}"
+    )
+
+    # Clean up
+    dat_path.unlink(missing_ok=True)

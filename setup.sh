@@ -38,6 +38,9 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit 1
 fi
 
+# Write config location to .config-location.dat for other scripts
+echo "$CONFIG_FILE" > "$SCRIPT_DIR/.config-location.dat"
+
 SOURCE_LINE="source \"$SCRIPT_PATH\" \"$CONFIG_FILE\""
 
 # Ensure .bashrc exists
