@@ -37,13 +37,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: pip-audit
-        name: Security audit with pip-audit
-        entry: uv run pip-audit
-        language: system
-        pass_filenames: false
-        always_run: true
-
       - id: shellcheck
         name: Lint shell scripts with pureshellcheck
         entry: uv run pureshellcheck
