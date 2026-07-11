@@ -6,9 +6,10 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from unittest import mock
 
 import pytest
+
+from tests.test_utils import check_bash_present
 
 
 @pytest.fixture
@@ -35,11 +36,6 @@ def mock_ps_env():
     yield env
     if os.path.exists(mock_dir):
         shutil.rmtree(mock_dir)
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def test_psfind_script_exists(psfind_script_path):
@@ -213,19 +209,6 @@ def test_psfind_combined_options(psfind_script_path):
 
     # Should show "Finding" in output
     assert "Finding" in result.stdout, "Should show 'Finding' in output"
-
-
-def test_bash_presence_warning():
-    """Test check_bash_present detects missing bash correctly."""
-    # Test detection when bash is NOT present
-    with mock.patch("tests.test_psfind.os.path.exists", return_value=False):
-        assert not check_bash_present(), (
-            "Should return False when /bin/bash doesn't exist"
-        )
-
-    # Test detection when bash IS present
-    with mock.patch("tests.test_psfind.os.path.exists", return_value=True):
-        assert check_bash_present(), "Should return True when /bin/bash exists"
 
 
 @pytest.mark.skipif(

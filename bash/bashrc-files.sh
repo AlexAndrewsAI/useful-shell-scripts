@@ -9,7 +9,7 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
         bookmark_error=0
         declare -a valid_keys=()
         declare -a valid_values=()
-        
+
         while IFS= read -r key; do
             if [[ -n "$key" ]]; then
                 # Strip leading and trailing double quotes from key
@@ -33,12 +33,12 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
                 fi
             fi
         done <<< "$bookmark_keys"
-        
+
         if [[ $bookmark_error -eq 1 ]]; then
             echo "Fatal: One or more bookmarks are invalid. Please fix the config file."
             return 1
         fi
-        
+
         # Second pass: create aliases and export env vars only for valid bookmarks
         for i in "${!valid_keys[@]}"; do
             key="${valid_keys[i]}"
@@ -89,7 +89,9 @@ devnull-redirect() {
     "$@" 2>/dev/null
 }
 
-
+f() {
+    devnull-redirect find -iname "$@"
+}
 
 if [ "$(command -v xclip)" ]; then
     alias clipboard-file='xclip -sel c < '
@@ -120,7 +122,7 @@ basenames() {
 # Usage: chmod-recursive-give-access [-b|--base BASE_DIR] [files...]
 chmod-recursive-give-access() {
     local BASE_DIR="$HOME"
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -133,7 +135,7 @@ chmod-recursive-give-access() {
                 ;;
         esac
     done
-    
+
     if [[ "$1" == "" ]]; then
         fls="."
     else

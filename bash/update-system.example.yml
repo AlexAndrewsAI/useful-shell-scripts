@@ -1,0 +1,51 @@
+# SteamDeck system update/setup configuration
+#
+# Copy this file to update-system.yml and adjust to your needs.
+# All package lists that were previously stored in requirements-*.txt
+# files now live in the sections below.
+
+# Set to true on SteamOS/SteamDeck to disable the read-only filesystem
+# before installing system packages and compiling AUR packages.
+steamos: true
+
+# Install the Decky plugin loader (Steam Deck only)
+decky: true
+
+# Force initialization of the pacman keyring on every run.
+force_init: false
+
+# Pacman packages to install (equivalent to requirements-pacman.txt).
+# Build tools (binutils, make, gcc, pkg-config, fakeroot) are installed
+# automatically by the script; only list additional packages here.
+pacman:
+  - yq
+  - vim
+  - xclip
+  - kwallet
+  - kwalletmanager
+  - debugedit
+  - mpv
+  - ffmpeg
+  - rclone
+  - borg
+
+# AUR packages to install via makepkg (equivalent to the old aur_install list).
+aur:
+  - activitywatch-bin
+
+# Flatpak packages from the stable flathub remote.
+flatpak:
+  - org.mozilla.firefox
+  - com.vscodium.codium
+  - org.gnome.meld
+  - org.keepassxc.KeePassXC
+
+# Global git configuration applied with `git config --global`.
+git:
+  user.name: AlexAndrewsAI
+  user.email: alex.andrews.ai@protonmail.com
+
+# Distrobox container setup.
+distrobox:
+  image: ubuntu:24.04
+  name: ubuntu

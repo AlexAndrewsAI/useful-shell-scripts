@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.test_utils import check_bash_present
+
 
 @pytest.fixture
 def setup_script_path():
@@ -35,11 +37,6 @@ def temp_home():
 
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def test_setup_script_exists(setup_script_path):
@@ -192,16 +189,34 @@ def test_setup_script_nonexistent_config(setup_script_path, temp_home, monkeypat
     )
 
 
-def test_bash_presence_warning():
-    """Test check_bash_present detects missing bash correctly."""
-    from unittest import mock
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_setup_script_writes_config_location(
+    setup_script_path, example_config_path, temp_home, monkeypatch
+):
+    """Test that setup.sh writes config location to .config-location.dat."""
+    monkeypatch.setenv("HOME", temp_home)
+    monkeypatch.setenv("SKIP_VENV_SETUP", "1")
 
-    # Test detection when bash is NOT present
-    with mock.patch("tests.test_setup.os.path.exists", return_value=False):
-        assert not check_bash_present(), (
-            "Should return False when /bin/bash doesn't exist"
-        )
+    # setup.sh writes .config-location.dat next to itself
+    dat_path = setup_script_path.parent / ".config-location.dat"
+    dat_path.unlink(missing_ok=True)
 
-    # Test detection when bash IS present
-    with mock.patch("tests.test_setup.os.path.exists", return_value=True):
-        assert check_bash_present(), "Should return True when /bin/bash exists"
+    result = subprocess.run(
+        ["/bin/bash", str(setup_script_path), str(example_config_path)],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "HOME": temp_home, "SKIP_VENV_SETUP": "1"},
+    )
+
+    assert result.returncode == 0, f"Setup script failed: {result.stderr}"
+    assert dat_path.exists(), ".config-location.dat should be created next to setup.sh"
+
+    dat_content = dat_path.read_text().strip()
+    assert dat_content == str(example_config_path), (
+        f".config-location.dat should contain {example_config_path}, got {dat_content}"
+    )
+
+    # Clean up
+    dat_path.unlink(missing_ok=True)

@@ -9,16 +9,13 @@ from unittest import mock
 
 import pytest
 
+from tests.test_utils import check_bash_present
+
 
 @pytest.fixture
 def ports_in_use_script_path():
     """Path to the ports-in-use.sh script."""
     return Path(__file__).parent.parent / "bash" / "ports-in-use.sh"
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def check_ss_present():
@@ -133,19 +130,6 @@ def test_ports_in_use_ss_check(ports_in_use_script_path):
         assert (
             "ss command not found" in result.stderr or "ss" in result.stderr.lower()
         ), "Should mention ss command in error message"
-
-
-def test_bash_presence_warning():
-    """Test check_bash_present detects missing bash correctly."""
-    # Test detection when bash is NOT present
-    with mock.patch("tests.test_ports_in_use.os.path.exists", return_value=False):
-        assert not check_bash_present(), (
-            "Should return False when /bin/bash doesn't exist"
-        )
-
-    # Test detection when bash IS present
-    with mock.patch("tests.test_ports_in_use.os.path.exists", return_value=True):
-        assert check_bash_present(), "Should return True when /bin/bash exists"
 
 
 @pytest.mark.skipif(

@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.test_utils import check_bash_present
+
 
 @pytest.fixture
 def bashrc_extra_script_path():
@@ -51,11 +53,6 @@ def temp_home():
 
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def test_bashrc_extra_script_exists(bashrc_extra_script_path):

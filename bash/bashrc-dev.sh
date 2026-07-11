@@ -7,7 +7,7 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
         # Strip leading and trailing double quotes
         venv_location="${venv_location#\"}"
         venv_location="${venv_location%\"}"
-        
+
         # Resolve venv path relative to config file directory
         config_dir=$(dirname "$FILE_BASHRC_CONFIG")
         if [[ "$venv_location" != /* ]]; then
@@ -15,7 +15,7 @@ if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_
         else
             venv_path="$venv_location"
         fi
-        
+
         # Export the venv path
         export DIR_PYTHON_VENV="$venv_path"
     fi
@@ -36,6 +36,20 @@ if [ "$(command -v uv)" ]; then
     if [ -n "$DIR_PYTHON_VENV" ]; then
         alias venv-main='source "$DIR_PYTHON_VENV/bin/activate"'
     fi
+
+    # Install pre-commit hooks if configured, then run all
+    prek-all() {
+        if [[ ! -f .pre-commit-config.yaml ]]; then
+            echo "No .pre-commit-config.yaml found" >&2
+            return 1
+        fi
+        if ! command -v uv &>/dev/null; then
+            echo "uv is not installed — install it first (https://docs.astral.sh/uv)" >&2
+            return 1
+        fi
+        uv run prek install
+        uv run prek run --all-files
+    }
 fi
 
 # Go to the main venv directory
@@ -178,7 +192,7 @@ if [ "$(command -v docker)" ]; then
         for i in $ids; do
             tosearch="$tosearch|$i"
         done
-        echo "$SEARCH" "$tosearch"
+        echo "SEARCH $tosearch"
         containers=$(docker container ls -a | grep -E "CONTAINER ID$tosearch")
 
         if [ "$(echo -e "$containers" | wc -l)" -gt 1 ]; then
@@ -311,6 +325,7 @@ str2array() {
     IFS=',' read -ra temp <<< "$value"
     i=0
     for i in "${!temp[@]}"; do
+        # shellcheck disable=SC2004
         currentValue=${temp[$i]}
         # Check if the value starts and ends with single or double quotes
         if [[ "${currentValue}" =~ ^[\"'].*[\"']$ ]]; then
@@ -322,5 +337,3 @@ str2array() {
     done
     eval "$key=(\"\${temp[@]}\")"
 }
-
-

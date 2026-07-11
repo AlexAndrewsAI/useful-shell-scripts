@@ -35,7 +35,7 @@ repeat() {
             echo "Alias '$cmd_name' found."
         else
             echo "Error: Command or Alias '$cmd_name' not found." >&2
-            exit 1
+            return 1
         fi
     fi
 
@@ -166,7 +166,7 @@ nohup-date() {
     else
         dtime="$(date +%Y-%m-%d_%H-%M-%S)"
         outfile="nohup-$dtime"
-        nohup sleep 1; "$@" >> "$outfile.out" 2>&1 &
+        nohup "$@" >> "$outfile.out" 2>&1 &
         pid=$!
         echo "$pid" >> "$outfile.out"
     fi
