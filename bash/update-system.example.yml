@@ -8,6 +8,9 @@
 # before installing system packages and compiling AUR packages.
 steamos: true
 
+# Install the Decky plugin loader (Steam Deck only)
+decky: true
+
 # Force initialization of the pacman keyring on every run.
 force_init: false
 
@@ -15,6 +18,7 @@ force_init: false
 # Build tools (binutils, make, gcc, pkg-config, fakeroot) are installed
 # automatically by the script; only list additional packages here.
 pacman:
+  - yq
   - kwallet
   - kwalletmanager
   - debugedit
@@ -33,9 +37,6 @@ flatpak:
 git:
   user.name: AlexAndrewsAI
   user.email: alex.andrews.ai@protonmail.com
-
-# Install the Decky plugin loader.
-decky: true
 
 # Distrobox container setup.
 distrobox:
