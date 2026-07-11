@@ -77,7 +77,7 @@ load_config() {
     tmp_config="$(mktemp)"
     CONFIG_TMP_FILES+=("$tmp_config")
 
-    python3 "$SCRIPTS_DIR/yaml_parser.py" "$config_file" > "$tmp_config"
+    python3 "$SCRIPTS_DIR/../python/yaml_parser.py" "$config_file" > "$tmp_config"
 
     # shellcheck source=/dev/null
     source "$tmp_config"

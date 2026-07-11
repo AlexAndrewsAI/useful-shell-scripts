@@ -12,7 +12,7 @@ from tests.test_utils import check_bash_present
 
 SCRIPT_DIR = Path(__file__).parent.parent / "bash"
 UPDATE_SYSTEM = SCRIPT_DIR / "update-system.sh"
-YAML_PARSER_SCRIPT = SCRIPT_DIR / "yaml_parser.py"
+YAML_PARSER_SCRIPT = SCRIPT_DIR.parent / "python" / "yaml_parser.py"
 
 
 def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
