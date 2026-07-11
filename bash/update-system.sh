@@ -184,7 +184,11 @@ install_decky() {
     local fin="$HOME/Downloads/decky_installer.desktop"
     wget -O "$fin" "https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/decky_installer.desktop"
     chmod a+rx "$fin"
-    gio launch "$fin"
+    if command -v gio &>/dev/null; then
+        gio launch "$fin"
+    else
+        echo "⚠ gio not found — launch $fin manually to complete Decky installation"
+    fi
 }
 
 # Setup a Distrobox container using the configured image and name
