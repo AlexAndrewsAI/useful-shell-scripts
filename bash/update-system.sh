@@ -25,7 +25,6 @@ DESCRIPTION:
     - Pacman package installation
     - AUR package installation
     - Git configuration
-    - Desktop shortcuts and configurations
     - Distrobox container setup
     - Bash configuration and Python venv (via setup.sh)
 
@@ -86,6 +85,8 @@ load_config() {
 ###############################################################################
 # UTILITY FUNCTIONS
 ###############################################################################
+
+CONFIG_TMP_FILES=()
 
 # Initialize pacman keyring if needed
 # Populates the pacman keyring with Holo and Arch Linux keys
@@ -251,7 +252,6 @@ set -- "${POSITIONAL_ARGS[@]}"
 ###############################################################################
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_TMP_FILES=()
 
 # Read config location from .config-location.dat (created by setup.sh)
 DAT_FILE="$SCRIPTS_DIR/../.config-location.dat"

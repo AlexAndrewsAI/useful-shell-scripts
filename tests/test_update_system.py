@@ -35,7 +35,6 @@ def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
         'echo "PACMAN_COUNT=${#CONFIG_PACMAN[@]}"\n'
         'echo "AUR_COUNT=${#CONFIG_AUR[@]}"\n'
         'echo "FLATPAK_COUNT=${#CONFIG_FLATPAK[@]}"\n'
-        'echo "SHORTCUTS_COUNT=${#CONFIG_SHORTCUTS[@]}"\n'
     )
     result = subprocess.run(
         ["/bin/bash", "-c", script],
@@ -74,7 +73,6 @@ def minimal_config():
         "git: []\n"
         "decky: false\n"
         "distrobox: []\n"
-        "shortcuts: []\n"
     )
     tmp = tempfile.NamedTemporaryFile(
         mode="w", suffix=".yml", delete=False, prefix="update-system-test-"
@@ -300,7 +298,6 @@ def test_update_system_config_parsing_minimal(minimal_config):
     assert "PACMAN_COUNT=0" in result.stdout
     assert "AUR_COUNT=0" in result.stdout
     assert "FLATPAK_COUNT=0" in result.stdout
-    assert "SHORTCUTS_COUNT=0" in result.stdout
 
 
 @pytest.mark.skipif(
@@ -326,8 +323,6 @@ def test_update_system_config_parsing_with_packages():
         "distrobox:\n"
         "  image: ubuntu:24.04\n"
         "  name: mybox\n"
-        "shortcuts:\n"
-        "  - firefox\n"
     )
     tmp = tempfile.NamedTemporaryFile(
         mode="w", suffix=".yml", delete=False, prefix="update-system-pkg-"
