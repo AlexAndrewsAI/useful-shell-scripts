@@ -43,7 +43,7 @@ if [ "$(command -v uv)" ]; then
             echo "No .pre-commit-config.yaml found" >&2
             return 1
         fi
-        uv prek install
+        uv run prek install
         uv run prek run --all-files
     }
 fi
