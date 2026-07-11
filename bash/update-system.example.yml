@@ -19,11 +19,15 @@ force_init: false
 # automatically by the script; only list additional packages here.
 pacman:
   - yq
+  - vim
+  - xclip
   - kwallet
   - kwalletmanager
   - debugedit
   - mpv
-  - torbrowser-launcher
+  - ffmpeg
+  - rclone
+  - borg
 
 # AUR packages to install via makepkg (equivalent to the old aur_install list).
 aur:
@@ -32,6 +36,9 @@ aur:
 # Flatpak packages from the stable flathub remote.
 flatpak:
   - org.mozilla.firefox
+  - com.vscodium.codium
+  - org.gnome.meld
+  - org.keepassxc.KeePassXC
 
 # Global git configuration applied with `git config --global`.
 git:
