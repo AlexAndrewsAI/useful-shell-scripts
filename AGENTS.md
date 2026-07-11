@@ -56,7 +56,7 @@ setup.sh                   # Setup script for bash integration
 
 ### Operational Constraints
 - **No Interactive Prompts:** Mock or bypass any interactive commands.
-- **No Git Operations:** Don't stage/commit unless explicitly requested.
+- **Staging & Commit Protocol:** When you have completed work and updated files, stage the changes with `git add` and then display a suggested commit message for the user's review. DO NOT actually commit - only stage and display the message.
 - **Code Review Mode:** Analyze only; record findings in `./REVIEW.md` without making modifications. At the top of the review, identify the reviewer including the name of the IDE/CLI used and the primary model that performed the review.
 
 ### File Maintenance
