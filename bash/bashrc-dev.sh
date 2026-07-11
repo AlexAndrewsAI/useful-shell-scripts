@@ -43,6 +43,10 @@ if [ "$(command -v uv)" ]; then
             echo "No .pre-commit-config.yaml found" >&2
             return 1
         fi
+        if ! command -v uv &>/dev/null; then
+            echo "uv is not installed — install it first (https://docs.astral.sh/uv)" >&2
+            return 1
+        fi
         uv run prek install
         uv run prek run --all-files
     }
