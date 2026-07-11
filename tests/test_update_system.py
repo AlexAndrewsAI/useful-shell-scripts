@@ -2,6 +2,7 @@
 """Test suite for update-system.sh script."""
 
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -167,16 +168,15 @@ def test_update_system_unknown_option(update_system_script_path):
 )
 def test_update_system_config_not_found(update_system_script_path):
     """Test that missing .config-location.dat causes an error."""
-    dat_path = update_system_script_path.parent.parent / ".config-location.dat"
-    dat_existed = dat_path.exists()
-    if dat_existed:
-        dat_path.unlink()
-    try:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        script_copy = os.path.join(tmpdir, "bash", "update-system.sh")
+        os.makedirs(os.path.dirname(script_copy))
+        shutil.copy2(update_system_script_path, script_copy)
         result = subprocess.run(
-            ["/bin/bash", str(update_system_script_path)],
+            ["/bin/bash", script_copy],
             capture_output=True,
             text=True,
-            cwd="/tmp",
+            cwd=tmpdir,
         )
         assert result.returncode != 0, (
             "Missing .config-location.dat should cause non-zero exit"
@@ -185,9 +185,6 @@ def test_update_system_config_not_found(update_system_script_path):
             ".config-location.dat" in result.stdout
             or "setup.sh" in result.stdout.lower()
         ), "Error message should mention .config-location.dat and setup.sh"
-    finally:
-        if dat_existed:
-            dat_path.touch()
 
 
 @pytest.mark.skipif(
