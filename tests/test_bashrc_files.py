@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.test_utils import check_bash_present, check_yq_present
+
 
 @pytest.fixture
 def bashrc_files_script_path():
@@ -58,13 +60,11 @@ def temp_bookmark_dirs():
         shutil.rmtree(temp_base)
 
 
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
-
-
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+@pytest.mark.skipif(
+    not check_yq_present(), reason="yq not found - skipping bookmark tests"
 )
 def test_bashrc_files_with_temp_config_file(bashrc_files_script_path, temp_config_file):
     """Test that script handles a config file with non-existent bookmark directories."""
@@ -570,6 +570,9 @@ def test_bashrc_files_devnull_redirect_function_execution(bashrc_files_script_pa
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
+@pytest.mark.skipif(
+    not check_yq_present(), reason="yq not found - skipping bookmark tests"
+)
 def test_bashrc_files_bookmark_env_var(bashrc_files_script_path, temp_bookmark_dirs):
     """Test that bookmarks create environment variables with DIR_ prefix."""
     # Create a temporary config file
@@ -619,6 +622,9 @@ def test_bashrc_files_bookmark_env_var(bashrc_files_script_path, temp_bookmark_d
 
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+@pytest.mark.skipif(
+    not check_yq_present(), reason="yq not found - skipping bookmark tests"
 )
 def test_bashrc_files_bookmark_env_var_naming_convention(
     bashrc_files_script_path, temp_bookmark_dirs

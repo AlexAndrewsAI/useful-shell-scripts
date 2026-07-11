@@ -3,7 +3,7 @@ name = "useful-shell-scripts"
 dynamic = ["version"]  # Version is read from __init__.py by hatch
 description = "A collection of practical shell scripts and Python development tools"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "AlexAndrewsAI", email = "alex.andrews.ai@protonmail.com"}
@@ -14,6 +14,9 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 
@@ -67,6 +70,7 @@ dev = [
     "ruff>=0.15.20",
     "pureshellcheck>=0.2.1",
     "pip-audit",
+    "prek>=0.4.8",
 ]
 
 [build-system]
@@ -136,4 +140,3 @@ exclude_lines = [
     "@pytest.mark.parametrize",  # Parameterized test decorators (not test logic)
     "def check_bash_present",  # Helper function for test conditions (not test logic)
 ]
-

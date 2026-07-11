@@ -9,16 +9,13 @@ from pathlib import Path
 
 import pytest
 
+from tests.test_utils import check_bash_present
+
 
 @pytest.fixture
 def bashrc_dev_script_path():
     """Path to the bashrc-dev.sh script."""
     return Path(__file__).parent.parent / "bash" / "bashrc-dev.sh"
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def test_bashrc_dev_script_exists(bashrc_dev_script_path):
@@ -319,10 +316,10 @@ def test_bashrc_dev_yaml2bash_without_yq(bashrc_dev_script_path):
             /usr/bin/command "$@"
         fi
     }}
-    
+
     # Source the bashrc script
     source {bashrc_dev_script_path}
-    
+
     # Check if yaml2bash is defined
     type yaml2bash 2>/dev/null || echo 'FUNCTION_NOT_FOUND'
     """
@@ -389,10 +386,10 @@ def test_bashrc_dev_git_functions_without_git(bashrc_dev_script_path):
             /usr/bin/command "$@"
         fi
     }}
-    
+
     # Source the bashrc script
     source {bashrc_dev_script_path}
-    
+
     # Check if git-update is defined
     type git-update 2>/dev/null || echo 'FUNCTION_NOT_FOUND'
     """
@@ -459,10 +456,10 @@ def test_bashrc_dev_docker_functions_without_docker(bashrc_dev_script_path):
             /usr/bin/command "$@"
         fi
     }}
-    
+
     # Source the bashrc script
     source {bashrc_dev_script_path}
-    
+
     # Check if docker-delete-images-search is defined
     type docker-delete-images-search 2>/dev/null || echo 'FUNCTION_NOT_FOUND'
     """
@@ -494,10 +491,10 @@ def test_bashrc_dev_kubernetes_functions_without_kubectl(bashrc_dev_script_path)
             /usr/bin/command "$@"
         fi
     }}
-    
+
     # Source the bashrc script
     source {bashrc_dev_script_path}
-    
+
     # Check if kubernetes-getpod is defined
     alias kubernetes-getpod 2>/dev/null || echo 'ALIAS_NOT_FOUND'
     """

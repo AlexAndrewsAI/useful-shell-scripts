@@ -7,12 +7,13 @@ nohup*
 temp.*
 *.temp
 
+# Exclude all dot files/directories by default, then whitelist the ones we need.
 /.*
 !.gitignore
 !.github
 !.env.example
 !.devin
-
+!.pre-commit-config.yaml
 
 # AI Agent Outputs & State Files
 agent_artifacts/

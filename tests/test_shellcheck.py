@@ -16,6 +16,7 @@ SHELL_FILES = [
     "bash/git2markdown.sh",
     "bash/ports-in-use.sh",
     "bash/psfind.sh",
+    "bash/update-system.sh",
 ]
 
 

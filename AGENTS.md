@@ -13,6 +13,7 @@
 | Linting & Formatting | ruff |
 | Type Checking | mypy |
 | Security Audit | pip-audit |
+| Git Hooks | prek |
 | Shell Script Linting | pureshellcheck |
 
 ## Project Structure
@@ -29,6 +30,7 @@ bash/                      # Shell scripts for various utilities
   └── psfind.sh            # Process finding utility
 tests/                     # Pytest suite for Python and shell script validation
 pyproject.toml             # Dependencies & tool config
+.pre-commit-config.yaml    # Pre-commit hooks configuration
 setup.sh                   # Setup script for bash integration
 ```
 
@@ -50,6 +52,7 @@ setup.sh                   # Setup script for bash integration
 - **Test Coverage:** Every Python code change requires corresponding tests in `tests/`.
 - **Shell Script Testing:** Shell scripts are validated using pureshellcheck in test_shellcheck.py.
 - **Validation Before Commit:** Run the full suite: `uv run pytest`, `uv run ruff check .`, `uv run mypy .`, `uv run pip-audit`.
+- **Pre-commit Hooks:** Use `uv run prek install` to set up Git hooks that automatically run these checks on commits.
 
 ### Operational Constraints
 - **No Interactive Prompts:** Mock or bypass any interactive commands.
@@ -58,6 +61,7 @@ setup.sh                   # Setup script for bash integration
 
 ### File Maintenance
 - **Keep Instructions Current:** Update "Tech Stack," "Project Structure," and "Workflow Commands" if `pyproject.toml`, structure, or core logic changes.
+- **Pre-commit Config:** Keep `.pre-commit-config.yaml` in sync with CI workflow when test requirements change.
 
 ## Workflow Commands
 ```bash
@@ -67,6 +71,8 @@ uv run ruff check .                     # Lint
 uv run ruff format .                    # Auto-format
 uv run mypy .                           # Type check
 uv run pip-audit                        # Security audit
+uv run prek install                     # Install pre-commit Git hooks
+uv run prek run --all-files             # Run all pre-commit hooks manually
 ```
 
 ## Repository-Specific Notes

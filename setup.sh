@@ -80,7 +80,7 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
             # Strip leading and trailing double quotes
             venv_location="${venv_location#\"}"
             venv_location="${venv_location%\"}"
-            
+
             # Resolve venv path relative to config file directory
             config_dir=$(dirname "$CONFIG_FILE")
             if [[ "$venv_location" != /* ]]; then
@@ -88,13 +88,13 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
             else
                 venv_path="$venv_location"
             fi
-            
+
             # Check if pyproject.toml exists in config directory
             pyproject_path="$config_dir/pyproject.toml"
             if [[ -f "$pyproject_path" ]]; then
                 echo "Setting up venv at: $venv_path"
                 cd "$config_dir" || return
-                
+
                 # Check if venv exists and has a valid Python interpreter
                 venv_needs_creation=false
                 if [[ ! -d "$venv_path" ]]; then
@@ -124,13 +124,13 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
                         fi
                     fi
                 fi
-                
+
                 # Create venv if needed
                 if [[ "$venv_needs_creation" = true ]]; then
                     echo "Creating venv..."
                     uv venv "$venv_path"
                 fi
-                
+
                 # Sync dependencies
                 export UV_PROJECT_ENVIRONMENT="$venv_path"
                 echo "Syncing dependencies from pyproject.toml..."
@@ -142,7 +142,7 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
                     echo "Syncing dependencies from pyproject.toml..."
                     uv sync --python "$venv_path/bin/python"
                 fi
-                
+
                 # Add packages if specified
                 if yq '.venv.add' "$CONFIG_FILE" >/dev/null 2>&1; then
                     add_packages=$(yq '.venv.add[]' "$CONFIG_FILE" 2>/dev/null)
@@ -159,7 +159,7 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
                         done <<< "$add_packages"
                     fi
                 fi
-                
+
                 # Remove packages if specified
                 if yq '.venv.remove' "$CONFIG_FILE" >/dev/null 2>&1; then
                     remove_packages=$(yq '.venv.remove[]' "$CONFIG_FILE" 2>/dev/null)
@@ -176,7 +176,7 @@ if [ "$(command -v yq)" ] && [ "$(command -v uv)" ]; then
                         done <<< "$remove_packages"
                     fi
                 fi
-                
+
                 cd - > /dev/null || true
                 echo "Venv setup complete."
             else

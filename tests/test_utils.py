@@ -28,6 +28,15 @@ def check_bash_present() -> bool:
     return get_bash_path() is not None
 
 
+def check_yq_present() -> bool:
+    """Check if yq is present on the system.
+
+    Returns:
+        True if yq is found, False otherwise.
+    """
+    return check_command_present("yq")
+
+
 def check_command_present(command: str) -> bool:
     """Check if a command is present on the system.
 

@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.test_utils import check_bash_present
+
 
 @pytest.fixture
 def setup_script_path():
@@ -35,11 +37,6 @@ def temp_home():
 
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def test_setup_script_exists(setup_script_path):
@@ -190,18 +187,3 @@ def test_setup_script_nonexistent_config(setup_script_path, temp_home, monkeypat
     assert "does not exist" in result.stdout or "Error" in result.stdout, (
         "Error message should mention config file does not exist"
     )
-
-
-def test_bash_presence_warning():
-    """Test check_bash_present detects missing bash correctly."""
-    from unittest import mock
-
-    # Test detection when bash is NOT present
-    with mock.patch("tests.test_setup.os.path.exists", return_value=False):
-        assert not check_bash_present(), (
-            "Should return False when /bin/bash doesn't exist"
-        )
-
-    # Test detection when bash IS present
-    with mock.patch("tests.test_setup.os.path.exists", return_value=True):
-        assert check_bash_present(), "Should return True when /bin/bash exists"

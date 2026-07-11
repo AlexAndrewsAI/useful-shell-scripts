@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 """Test suite for bashrc-processes.sh script."""
 
-import os
 import subprocess
 from pathlib import Path
 
 import pytest
+
+from tests.test_utils import check_bash_present
 
 
 @pytest.fixture
 def bashrc_processes_script_path():
     """Path to the bashrc-processes.sh script."""
     return Path(__file__).parent.parent / "bash" / "bashrc-processes.sh"
-
-
-def check_bash_present():
-    """Check if /bin/bash is present on the system."""
-    return os.path.exists("/bin/bash")
 
 
 def test_bashrc_processes_script_exists(bashrc_processes_script_path):

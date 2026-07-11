@@ -173,7 +173,7 @@ if [ "$(command -v rclone)" ]; then
     # Environment variable: RCLONE_PASSWORD (optional, avoids interactive prompt)
     rclone-backup-config() {
         fin=$(rclone config file | tail -1)
-        
+
         # Check for TTY or environment variable
         if [ -t 0 ]; then
             read -r -s -p "Enter Password: " pswd
@@ -185,7 +185,7 @@ if [ "$(command -v rclone)" ]; then
             echo "Usage: RCLONE_PASSWORD=your_password rclone-backup-config" >&2
             return 1
         fi
-        
+
         echo "$pswd" | rclone-decrypt-config
         cp "$fin" "./rclone-$(date +%F).conf"
         echo "config file backed up to: ./rclone-$(date +%F).conf"
