@@ -126,15 +126,15 @@ run_pacman() {
         return 0
     fi
     echo "Installing pacman packages..."
-    local dir
-    dir="$(pwd)"
-    cd ~ || exit 1
+    local original_dir
+    original_dir="$(pwd)"
+    cd "$HOME" || exit 1
     for line in "$@"; do
         [ -z "$line" ] && continue
         echo "  → Installing: $line"
         sudo pacman -S --noconfirm "$line"
     done
-    cd "$dir" || exit 1
+    cd "$original_dir" || exit 1
     echo "✓ Pacman installation complete"
 }
 
@@ -146,19 +146,20 @@ aur_install() {
         echo "ℹ No AUR packages configured, skipping"
         return 0
     fi
-    local home
-    home="$(pwd)"
-    cd /tmp || exit 1
+    local original_dir
+    original_dir="$(pwd)"
+    local build_dir
+    build_dir="$(mktemp -d)"
     for package in "$@"; do
         echo "Installing AUR package: $package..."
-        rm -fr "$package"
-        git clone "https://aur.archlinux.org/$package.git"
-        cd "$package" || exit 1
+        git clone "https://aur.archlinux.org/$package.git" "$build_dir/$package"
+        cd "$build_dir/$package" || exit 1
         makepkg -si --noconfirm
-        cd .. || exit 1
-        rm -fr "$package"
+        cd "$build_dir" || exit 1
+        rm -rf "${build_dir:?}/$package"
     done
-    cd "$home" || exit 1
+    rm -rf "${build_dir:?}"
+    cd "$original_dir" || exit 1
     echo "✓ AUR installation complete"
 }
 
