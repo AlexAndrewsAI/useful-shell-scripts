@@ -36,6 +36,14 @@ def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
         'echo "PACMAN_COUNT=${#CONFIG_PACMAN[@]}"\n'
         'echo "AUR_COUNT=${#CONFIG_AUR[@]}"\n'
         'echo "FLATPAK_COUNT=${#CONFIG_FLATPAK[@]}"\n'
+        'echo "NPM_COUNT=${#CONFIG_NPM[@]}"\n'
+        'echo "SNAP_COUNT=${#CONFIG_SNAP[@]}"\n'
+        'echo "APT_COUNT=${#CONFIG_APT[@]}"\n'
+        'echo "DNF_COUNT=${#CONFIG_DNF[@]}"\n'
+        'echo "BREW_COUNT=${#CONFIG_BREW[@]}"\n'
+        'echo "NIX_COUNT=${#CONFIG_NIX[@]}"\n'
+        'echo "CARGO_COUNT=${#CONFIG_CARGO[@]}"\n'
+        'echo "GO_COUNT=${#CONFIG_GO[@]}"\n'
     )
     result = subprocess.run(
         ["/bin/bash", "-c", script],
@@ -59,7 +67,7 @@ def update_system_script_path():
 @pytest.fixture
 def example_config_path():
     """Path to the example YAML config file."""
-    return SCRIPT_DIR / "update-system.example.yml"
+    return SCRIPT_DIR.parent / "config.example.yml"
 
 
 @pytest.fixture
@@ -71,6 +79,14 @@ def minimal_config():
         "pacman: []\n"
         "aur: []\n"
         "flatpak: []\n"
+        "npm: []\n"
+        "snap: []\n"
+        "apt: []\n"
+        "dnf: []\n"
+        "brew: []\n"
+        "nix: []\n"
+        "cargo: []\n"
+        "go: []\n"
         "git: []\n"
         "decky: false\n"
         "distrobox: []\n"
@@ -295,6 +311,14 @@ def test_update_system_config_parsing_minimal(minimal_config):
     assert "PACMAN_COUNT=0" in result.stdout
     assert "AUR_COUNT=0" in result.stdout
     assert "FLATPAK_COUNT=0" in result.stdout
+    assert "NPM_COUNT=0" in result.stdout
+    assert "SNAP_COUNT=0" in result.stdout
+    assert "APT_COUNT=0" in result.stdout
+    assert "DNF_COUNT=0" in result.stdout
+    assert "BREW_COUNT=0" in result.stdout
+    assert "NIX_COUNT=0" in result.stdout
+    assert "CARGO_COUNT=0" in result.stdout
+    assert "GO_COUNT=0" in result.stdout
 
 
 @pytest.mark.skipif(
@@ -313,6 +337,23 @@ def test_update_system_config_parsing_with_packages():
         "  - visual-studio-code-bin\n"
         "flatpak:\n"
         "  - org.mozilla.firefox\n"
+        "npm:\n"
+        "  - typescript\n"
+        "  - eslint\n"
+        "snap:\n"
+        "  - vscode\n"
+        "apt:\n"
+        "  - build-essential\n"
+        "dnf:\n"
+        "  - neovim\n"
+        "brew:\n"
+        "  - htop\n"
+        "nix:\n"
+        "  - ripgrep\n"
+        "cargo:\n"
+        "  - bat\n"
+        "go:\n"
+        "  - github.com/cli/cli/v2/cmd/gh\n"
         "git:\n"
         "  user.name: TestUser\n"
         "  user.email: test@example.com\n"
@@ -344,11 +385,28 @@ def test_update_system_config_parsing_with_packages():
             'echo "PACMAN_COUNT=${#CONFIG_PACMAN[@]}"\n'
             'echo "AUR_COUNT=${#CONFIG_AUR[@]}"\n'
             'echo "FLATPAK_COUNT=${#CONFIG_FLATPAK[@]}"\n'
+            'echo "NPM_COUNT=${#CONFIG_NPM[@]}"\n'
+            'echo "SNAP_COUNT=${#CONFIG_SNAP[@]}"\n'
+            'echo "APT_COUNT=${#CONFIG_APT[@]}"\n'
+            'echo "DNF_COUNT=${#CONFIG_DNF[@]}"\n'
+            'echo "BREW_COUNT=${#CONFIG_BREW[@]}"\n'
+            'echo "NIX_COUNT=${#CONFIG_NIX[@]}"\n'
+            'echo "CARGO_COUNT=${#CONFIG_CARGO[@]}"\n'
+            'echo "GO_COUNT=${#CONFIG_GO[@]}"\n'
             'echo "PACMAN_0=${CONFIG_PACMAN[0]}"\n'
             'echo "PACMAN_1=${CONFIG_PACMAN[1]}"\n'
             'echo "PACMAN_2=${CONFIG_PACMAN[2]}"\n'
             'echo "AUR_0=${CONFIG_AUR[0]}"\n'
             'echo "FLATPAK_0=${CONFIG_FLATPAK[0]}"\n'
+            'echo "NPM_0=${CONFIG_NPM[0]}"\n'
+            'echo "NPM_1=${CONFIG_NPM[1]}"\n'
+            'echo "SNAP_0=${CONFIG_SNAP[0]}"\n'
+            'echo "APT_0=${CONFIG_APT[0]}"\n'
+            'echo "DNF_0=${CONFIG_DNF[0]}"\n'
+            'echo "BREW_0=${CONFIG_BREW[0]}"\n'
+            'echo "NIX_0=${CONFIG_NIX[0]}"\n'
+            'echo "CARGO_0=${CONFIG_CARGO[0]}"\n'
+            'echo "GO_0=${CONFIG_GO[0]}"\n'
             'echo "GIT_USER_NAME=$CONFIG_GIT_USER_NAME"\n'
             'echo "GIT_USER_EMAIL=$CONFIG_GIT_USER_EMAIL"\n'
             'echo "DISTROBOX_IMAGE=$CONFIG_DISTROBOX_IMAGE"\n'
@@ -370,6 +428,23 @@ def test_update_system_config_parsing_with_packages():
         assert "AUR_0=visual-studio-code-bin" in result.stdout
         assert "FLATPAK_COUNT=1" in result.stdout
         assert "FLATPAK_0=org.mozilla.firefox" in result.stdout
+        assert "NPM_COUNT=2" in result.stdout
+        assert "NPM_0=typescript" in result.stdout
+        assert "NPM_1=eslint" in result.stdout
+        assert "SNAP_COUNT=1" in result.stdout
+        assert "SNAP_0=vscode" in result.stdout
+        assert "APT_COUNT=1" in result.stdout
+        assert "APT_0=build-essential" in result.stdout
+        assert "DNF_COUNT=1" in result.stdout
+        assert "DNF_0=neovim" in result.stdout
+        assert "BREW_COUNT=1" in result.stdout
+        assert "BREW_0=htop" in result.stdout
+        assert "NIX_COUNT=1" in result.stdout
+        assert "NIX_0=ripgrep" in result.stdout
+        assert "CARGO_COUNT=1" in result.stdout
+        assert "CARGO_0=bat" in result.stdout
+        assert "GO_COUNT=1" in result.stdout
+        assert "GO_0=github.com/cli/cli/v2/cmd/gh" in result.stdout
         assert "GIT_USER_NAME=TestUser" in result.stdout
         assert "GIT_USER_EMAIL=test@example.com" in result.stdout
         assert "DISTROBOX_IMAGE=ubuntu:24.04" in result.stdout
@@ -486,3 +561,141 @@ def test_update_system_setup_distrobox_empty():
     )
     assert result.returncode == 0, f"setup_distrobox should succeed: {result.stderr}"
     assert "Distrobox" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_npm_empty():
+    """Test that run_npm skips gracefully with no arguments."""
+    script = _source_function("run_npm") + "run_npm\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_npm should succeed: {result.stderr}"
+    assert "No npm" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_snap_empty():
+    """Test that run_snap skips gracefully with no arguments."""
+    script = _source_function("run_snap") + "run_snap\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_snap should succeed: {result.stderr}"
+    assert "No snap" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_apt_empty():
+    """Test that run_apt skips gracefully with no arguments."""
+    script = _source_function("run_apt") + "run_apt\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_apt should succeed: {result.stderr}"
+    assert "No apt" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_dnf_empty():
+    """Test that run_dnf skips gracefully with no arguments."""
+    script = _source_function("run_dnf") + "run_dnf\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_dnf should succeed: {result.stderr}"
+    assert "No dnf" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_brew_empty():
+    """Test that run_brew skips gracefully with no arguments."""
+    script = _source_function("run_brew") + "run_brew\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_brew should succeed: {result.stderr}"
+    assert "No brew" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_nix_empty():
+    """Test that run_nix skips gracefully with no arguments."""
+    script = _source_function("run_nix") + "run_nix\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_nix should succeed: {result.stderr}"
+    assert "No nix" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_cargo_empty():
+    """Test that run_cargo skips gracefully with no arguments."""
+    script = _source_function("run_cargo") + "run_cargo\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_cargo should succeed: {result.stderr}"
+    assert "No cargo" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_run_go_empty():
+    """Test that run_go skips gracefully with no arguments."""
+    script = _source_function("run_go") + "run_go\n"
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_go should succeed: {result.stderr}"
+    assert "No go" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_check_command_missing():
+    """Test that check_command returns 1 for missing commands."""
+    script = (
+        _source_function("check_command")
+        + "check_command nonexistent_command_xyz123 npm\n"
+    )
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, "check_command should return 1 for missing command"
+    assert "not found" in result.stdout.lower() or "skipping" in result.stdout.lower()

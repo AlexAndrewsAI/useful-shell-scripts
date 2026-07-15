@@ -1,13 +1,162 @@
+# ============================================================================
+# GENERAL CONFIGURATION
+# ============================================================================
+# This section contains general project configuration including directory
+# bookmarks and virtual environment settings.
+
 # Directory bookmarks - creates goto- aliases when yq is installed
+# These allow quick navigation to frequently used directories via aliases
+# like goto-tmp, goto-downloads, etc.
 bookmarks:
   tmp: /tmp
   downloads: ~/Downloads
   local-bin: ~/.local/bin
 
-
+# Virtual environment configuration for Python projects
+# Used by the bash utilities to manage project dependencies with uv
 venv:
-  location: .venv # interpret as relative to the config directory if applicable
-  add: # packages to add to the project (runs uv add [package])
+  location: .venv  # Interpret as relative to the config directory if applicable
+  add:  # Packages to add to the project (runs uv add [package])
     # - sqlalchemy
-  remove: # packages to remove from the project (runs uv remove [package])
-    # - sqlalchemy # this undoes the previous as an example
+  remove:  # Packages to remove from the project (runs uv remove [package])
+    # - sqlalchemy  # This undoes the previous as an example
+
+# ============================================================================
+# SYSTEM UPDATE CONFIGURATION
+# ============================================================================
+# This section contains configuration for system package management and setup.
+# Primarily used by update-system.sh for Steam Deck/SteamOS and Arch Linux.
+# Copy this file to config.yml and adjust to your needs.
+# All package lists that were previously stored in requirements-*.txt
+# files now live in the sections below.
+
+# SteamDeck/SteamOS specific settings
+# Set to true on SteamOS/SteamDeck to disable the read-only filesystem
+# before installing system packages and compiling AUR packages.
+steamos: true
+
+# Install the Decky plugin loader (Steam Deck only)
+# Decky allows loading third-party plugins on Steam Deck
+decky: true
+
+# Force initialization of the pacman keyring on every run
+# Useful if keyring issues occur frequently; set to false normally
+force_init: false
+
+# Pacman packages to install (equivalent to requirements-pacman.txt)
+# Build tools (binutils, make, gcc, pkg-config, fakeroot) are installed
+# automatically by the script; only list additional packages here.
+# These are installed from the official Arch Linux repositories.
+pacman:
+  - yq
+  - vim
+  - xclip
+  - kwallet
+  - kwalletmanager
+  - debugedit
+  - mpv
+  - ffmpeg
+  - rclone
+  - borg
+  - npm
+  - wget
+
+# AUR packages to install via makepkg (equivalent to the old aur_install list)
+# These are installed from the Arch User Repository and require compilation.
+# Only add packages that are not available in the official repositories.
+aur:
+  - activitywatch-bin
+
+# Flatpak packages from the stable flathub remote
+# Flatpak provides sandboxed applications that run across different distributions
+# These are installed from Flathub, the central Flatpak repository.
+flatpak:
+  - org.mozilla.firefox
+  - com.vscodium.codium
+  - org.gnome.meld
+  - org.keepassxc.KeePassXC
+
+# NPM packages to install globally
+# These are installed via npm after npm is installed via pacman
+npm:
+  - typescript
+  - ts-node
+  - eslint
+
+# Snap packages to install
+# Snap is primarily used on Ubuntu/Debian systems
+# Commented out by default since this script assumes Arch Linux
+snap:
+#   - vscode
+#   - discord
+
+# APT packages to install
+# APT is used on Debian/Ubuntu systems
+# Commented out by default since this script assumes Arch Linux
+apt:
+#   - build-essential
+#   - curl
+#   - git
+
+# DNF packages to install (Fedora/RHEL)
+# DNF is the package manager for Fedora, RHEL, and derivatives
+# Commented out by default since this script assumes Arch Linux
+dnf:
+#   - neovim
+
+# Homebrew packages to install (macOS/Linux)
+# Homebrew is a popular cross-platform package manager
+# Commented out by default since this script assumes Arch Linux
+brew:
+#   - htop
+
+# Nix packages to install (any Linux distro)
+# Nix is a purely functional package manager
+# Packages are installed via 'nix profile install nixpkgs#<pkg>'
+# Commented out by default since this script assumes Arch Linux
+nix:
+#   - ripgrep
+
+# Cargo packages to install (Rust)
+# Installed via 'cargo install <pkg>'
+# Commented out by default since this script assumes Arch Linux
+cargo:
+#   - bat
+
+# Go packages to install
+# Installed via 'go install <pkg>@latest'
+# Commented out by default since this script assumes Arch Linux
+go:
+#   - github.com/cli/cli/v2/cmd/gh@latest
+
+# AppImage packages to download and install
+# Format: alias: url
+# If alias is a single word (e.g., "test"), the AppImage is downloaded to
+# $HOME/.local/bin as an executable named "test"
+# If alias is a full path (e.g., "/usr/local/bin/myapp"), the AppImage is
+# downloaded to that path, creating parent directories as needed
+appimage:
+#   test: https://example.com/test.AppImage
+#   /usr/local/bin/myapp: https://example.com/myapp.AppImage
+
+# Shell executables to create
+# Format: name: command
+# Creates a shell script with "#!/bin/sh" and "set -euo pipefail" containing
+# the given command, then makes it executable (+x).
+# If name is a path (contains /), the script is written there;
+# otherwise it goes to $HOME/.local/bin/<name>
+shell-exe:
+  firefox: flatpak run org.mozilla.firefox $@
+
+# Global git configuration applied with `git config --global`
+# These settings configure git identity across all repositories on the system.
+git:
+  user.name: AlexAndrewsAI
+  user.email: alex.andrews.ai@protonmail.com
+
+# Distrobox container setup
+# Distrobox creates containers using podman/docker for running different
+# Linux distributions alongside your main system.
+distrobox:
+  image: ubuntu:24.04  # Container image to use
+  name: ubuntu        # Name for the container

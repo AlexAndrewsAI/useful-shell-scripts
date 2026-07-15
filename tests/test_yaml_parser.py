@@ -211,6 +211,28 @@ class TestEmit:
         assert len(out) == 1
         assert out[0] == f"CONFIG_NAME={shlex.quote(evil)}"
 
+    def test_appimage_emit(self) -> None:
+        out = emit(
+            {"appimage": {"firefox": "https://example.com/firefox.AppImage"}}, ""
+        )
+        assert "CONFIG_APPIMAGE_firefox=https://example.com/firefox.AppImage" in out
+        assert "CONFIG_APPIMAGE_firefox_ALIAS=firefox" in out
+
+    def test_shell_exe_emit(self) -> None:
+        out = emit({"shell-exe": {"firefox": "flatpak run org.mozilla.firefox $@"}}, "")
+        assert "CONFIG_SHELL_EXE_firefox=" in out[0]
+        assert "flatpak run org.mozilla.firefox $@" in out[0]
+        assert "CONFIG_SHELL_EXE_firefox_ALIAS=firefox" in out
+
+    def test_shell_exe_emit_path_name(self) -> None:
+        out = emit(
+            {"shell-exe": {"/usr/local/bin/myapp": "flatpak run org.something.app"}},
+            "",
+        )
+        # Path separators become underscores in variable names
+        assert "CONFIG_SHELL_EXE__usr_local_bin_myapp=" in out[0]
+        assert "CONFIG_SHELL_EXE__usr_local_bin_myapp_ALIAS=/usr/local/bin/myapp" in out
+
 
 # ---------------------------------------------------------------------------
 # parse_and_emit  (integration)
@@ -235,6 +257,14 @@ class TestParseAndEmit:
         assert "CONFIG_PACMAN+=(vim)" in out
         assert "CONFIG_PACMAN+=(git)" in out
         assert "CONFIG_GIT_USER_NAME=TestUser" in out
+
+    def test_shell_exe_config(self, tmp_path: Path) -> None:
+        cfg = tmp_path / "test.yml"
+        cfg.write_text("shell-exe:\n  firefox: flatpak run org.mozilla.firefox $@\n")
+        out = parse_and_emit(str(cfg))
+        assert "CONFIG_SHELL_EXE_firefox=" in out[0]
+        assert "flatpak run org.mozilla.firefox $@" in out[0]
+        assert "CONFIG_SHELL_EXE_firefox_ALIAS=firefox" in out
 
 
 # ---------------------------------------------------------------------------

@@ -47,6 +47,8 @@ if [ "$(command -v uv)" ]; then
             echo "uv is not installed — install it first (https://docs.astral.sh/uv)" >&2
             return 1
         fi
+        export UV_PROJECT_ENVIRONMENT=.venv
+        uv sync --dev
         uv run prek install
         uv run prek run --all-files
     }
@@ -116,6 +118,25 @@ if [ "$(command -v git)" ]; then
     alias git-tree-files="git ls-tree -r --name-only HEAD | tree -a --fromfile"
     alias git-current-branch="git rev-parse --abbrev-ref HEAD"
     alias git-merge-dry-run="git merge --no-commit --no-ff"
+    alias git-email="git config user.email"
+    alias git-name="git config user.name"
+    alias git-main-pull="git checkout main && git pull"
+
+    git-ssh-new() {
+        email="$(git config --global --get user.email || true)"
+        if [ -z "$email" ]; then
+            echo "Error: git config user.email not set." >&2
+            return 1
+        fi
+
+
+
+        ssh-keygen -t ed25519 -C "$email"
+        echo "====================== Public key ==========================="
+        cat "$HOME/.ssh/id_ed25519.pub"
+        echo "Create new ssh key: https://github.com/settings/ssh/new"
+    }
+
 
     # Stage all changes and commit with timestamp message
     # Usage: git-update
@@ -123,6 +144,48 @@ if [ "$(command -v git)" ]; then
         git add .
         git commit -m "update-$(datetime)"
     }
+
+    git-web() {
+        local remote_url url user repo
+
+        echo "Fetching remote URL..."
+        remote_url="$(
+            git remote -v 2>/dev/null |
+            awk '$3 ~ /^\(fetch\)$/ {print $2; exit}
+                {if(!found && $3 ~ /^\(push\)$/){found=1; print $2; exit}}'
+        )"
+
+        if [ -z "$remote_url" ]; then
+            echo "No remote URL found, opening GitHub..."
+            xdg-open "https://github.com" >/dev/null 2>&1 || open "https://github.com"
+            return 0
+        fi
+
+        echo "Parsing remote URL: $remote_url"
+        url=""
+        if [[ "$remote_url" =~ ^[^@]+@[^:]+:(.+)$ ]]; then
+            url="${BASH_REMATCH[1]}"
+        elif [[ "$remote_url" =~ ^ssh://[^/]+/(.+)$ ]]; then
+            url="${BASH_REMATCH[1]}"
+        elif [[ "$remote_url" =~ ^https?://[^/]+/(.+)$ ]]; then
+            url="${BASH_REMATCH[1]}"
+        fi
+
+        if [ -n "$url" ]; then
+            url="${url%.git}"
+            user="${url%%/*}"
+            repo="${url##*/}"
+        fi
+
+        if [ -z "$user" ] || [ -z "$repo" ] || [ "$user" = "$repo" ]; then
+            echo "Could not parse user/repo, opening GitHub..."
+            xdg-open "https://github.com" >/dev/null 2>&1 || open "https://github.com"
+        else
+            echo "Opening https://github.com/$user/$repo"
+            xdg-open "https://github.com/$user/$repo" >/dev/null 2>&1 || open "https://github.com/$user/$repo"
+        fi
+    }
+
 
     # Pull all remote branches and return to current branch
     # Usage: git-pull-all-branches

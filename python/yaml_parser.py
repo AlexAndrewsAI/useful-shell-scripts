@@ -160,12 +160,36 @@ def emit(obj: dict[str, Any], prefix: str) -> list[str]:
             for item in value:
                 out.append(f"{var}+=({shlex.quote(str(item))})")
         elif isinstance(value, dict):
-            out.extend(
-                emit(
-                    value,
-                    prefix + key.upper().replace("-", "_").replace(".", "_") + "_",
+            # Special handling for appimage dictionary to emit alias:url pairs
+            if key == "appimage":
+                for alias, url in value.items():
+                    # Convert alias to a valid bash variable name
+                    # Replace slashes and other special chars with underscores
+                    safe_alias = (
+                        alias.replace("/", "_").replace("-", "_").replace(".", "_")
+                    )
+                    appimage_var = f"CONFIG_APPIMAGE_{safe_alias}"
+                    out.append(f"{appimage_var}={shlex.quote(str(url))}")
+                    # Also store the original alias for reconstruction
+                    out.append(f"{appimage_var}_ALIAS={shlex.quote(str(alias))}")
+            # Special handling for shell-exe dictionary to emit name:command pairs
+            elif key == "shell-exe":
+                for name, command in value.items():
+                    # Convert name to a valid bash variable name
+                    safe_name = (
+                        name.replace("/", "_").replace("-", "_").replace(".", "_")
+                    )
+                    shell_exe_var = f"CONFIG_SHELL_EXE_{safe_name}"
+                    out.append(f"{shell_exe_var}={shlex.quote(str(command))}")
+                    # Also store the original name for reconstruction
+                    out.append(f"{shell_exe_var}_ALIAS={shlex.quote(str(name))}")
+            else:
+                out.extend(
+                    emit(
+                        value,
+                        prefix + key.upper().replace("-", "_").replace(".", "_") + "_",
+                    )
                 )
-            )
         elif value is None:
             out.append(f"{var}=")
         else:
