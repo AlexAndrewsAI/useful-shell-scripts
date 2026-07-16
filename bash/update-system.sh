@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# Script: SteamDeck System Update Script
+# Script: System Update Script
 # Description: Automates installation of packages, virtual environments, and
-# configurations for a SteamDeck development environment using a YAML config.
+# configurations using a YAML config. Supports pacman, apt, dnf, brew, nix,
+# npm, snap, cargo, go, flatpak, AppImage, and shell executables.
 # Usage: ./update-system.sh [OPTIONS]
 # Options:
 #   -h, --help          Show this help message
 #   -i, --init          Force initialization of pacman keyring
-#   -c, --config FILE   Path to YAML config (default: config.yml
+#   -c, --config FILE   Path to YAML config (default: config.yaml
 #                       in project root, via .config-location.dat)
 
 ###############################################################################
@@ -50,7 +51,7 @@ OPTIONS:
 EXAMPLES:
     $0                          # Normal execution (reads .config-location.dat)
     $0 --init                   # Force keyring initialization
-    $0 -c my-config.yml         # Override config location
+    $0 -c my-config.yaml         # Override config location
     $0 -h                       # Display this help message
 
 REQUIREMENTS:
@@ -98,7 +99,7 @@ load_config() {
 # UTILITY FUNCTIONS
 ###############################################################################
 
-CONFIG_TMP_FILES=()
+declare -a CONFIG_TMP_FILES=()
 
 # Initialize pacman keyring if needed
 # Populates the pacman keyring with Holo and Arch Linux keys
@@ -139,15 +140,11 @@ run_pacman() {
         return 0
     fi
     echo "Installing pacman packages..."
-    local original_dir
-    original_dir="$(pwd)"
-    cd "$HOME" || exit 1
     for line in "$@"; do
         [ -z "$line" ] && continue
         echo "  → Installing: $line"
         sudo pacman -S --noconfirm "$line"
     done
-    cd "$original_dir" || exit 1
     echo "✓ Pacman installation complete"
 }
 
@@ -217,6 +214,22 @@ run_snap() {
     fi
     if ! check_command "snap" "snap"; then
         return 0
+    fi
+    # Check if snapd daemon is responsive
+    if ! snap list >/dev/null 2>&1; then
+        echo "⚠ snapd daemon not responding, attempting to start it..."
+        if command -v systemctl &>/dev/null; then
+            sudo systemctl start snapd 2>/dev/null || true
+        elif command -v service &>/dev/null; then
+            sudo service snapd start 2>/dev/null || true
+        fi
+        # Give snapd a moment to initialize
+        sleep 2
+        if ! snap list >/dev/null 2>&1; then
+            echo "✗ snapd daemon could not be started — skipping snap package installation"
+            return 1
+        fi
+        echo "✓ snapd daemon started successfully"
     fi
     echo "Installing snap packages..."
     for package in "$@"; do
@@ -525,6 +538,9 @@ setup_distrobox() {
         return 0
     fi
     echo "Setting up Distrobox..."
+    if ! check_command "distrobox-list" "distrobox"; then
+        return 0
+    fi
     export DBX_CONTAINER_IMAGE="$image"
     export DBX_CONTAINER_NAME="$name"
     if ! distrobox-list | grep -Fq "$name"; then
@@ -536,8 +552,11 @@ setup_distrobox() {
 }
 
 ###############################################################################
-# ARGUMENT PARSING
+# ARGUMENT PARSING & MAIN EXECUTION
+# Skipped when sourced with _SOURCE_ONLY=true (for testing individual functions)
 ###############################################################################
+
+if [[ "${_SOURCE_ONLY:-}" != "true" ]]; then
 
 POSITIONAL_ARGS=()
 FORCE_INIT=FALSE
@@ -622,8 +641,16 @@ if [ "${CONFIG_STEAMOS:-false}" = "true" ]; then
     sudo steamos-readonly disable
 fi
 
-# Prepare system for compilation
-sudo pacman -S --noconfirm binutils make gcc pkg-config fakeroot
+# Prepare system for compilation (detect package manager)
+if command -v pacman &>/dev/null; then
+    sudo pacman -S --noconfirm binutils make gcc pkg-config fakeroot
+elif command -v apt-get &>/dev/null; then
+    sudo apt-get install -y build-essential pkg-config fakeroot
+elif command -v dnf &>/dev/null; then
+    sudo dnf install -y binutils make gcc pkg-config fakeroot
+elif command -v brew &>/dev/null; then
+    brew install make gcc pkg-config
+fi
 
 # Install flatpak packages
 run_flatpak "${CONFIG_FLATPAK[@]}"
@@ -694,3 +721,5 @@ echo "   ~/.local/share/applications/quicklaunch.desktop"
 echo "   (Try to pin to taskbar)"
 echo ""
 echo "=========================================="
+
+fi  # end _SOURCE_ONLY guard

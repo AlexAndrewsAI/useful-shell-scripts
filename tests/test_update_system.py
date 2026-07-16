@@ -55,7 +55,7 @@ def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
 
 def _source_function(func_name: str) -> str:
     """Build a bash script that sources a single function from update-system.sh."""
-    return f"source <(sed -n '/^{func_name}()/,/^}}/p' \"{UPDATE_SYSTEM}\")\n"
+    return f'_SOURCE_ONLY=true; source "{UPDATE_SYSTEM}"; declare -f {func_name}\n'
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def update_system_script_path():
 @pytest.fixture
 def example_config_path():
     """Path to the example YAML config file."""
-    return SCRIPT_DIR.parent / "config.example.yml"
+    return SCRIPT_DIR.parent / "config.example.yaml"
 
 
 @pytest.fixture
@@ -87,12 +87,12 @@ def minimal_config():
         "nix: []\n"
         "cargo: []\n"
         "go: []\n"
-        "git: []\n"
+        "git: {}\n"
         "decky: false\n"
-        "distrobox: []\n"
+        "distrobox: {}\n"
     )
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yml", delete=False, prefix="update-system-test-"
+        mode="w", suffix=".yaml", delete=False, prefix="update-system-test-"
     )
     tmp.write(config_content)
     tmp.close()
@@ -211,7 +211,7 @@ def test_update_system_config_dat_points_nowhere(update_system_script_path):
     with tempfile.TemporaryDirectory() as tmpdir:
         dat_path = os.path.join(tmpdir, ".config-location.dat")
         with open(dat_path, "w") as f:
-            f.write("/nonexistent/config.yml")
+            f.write("/nonexistent/config.yaml")
         result = subprocess.run(
             ["/bin/bash", str(update_system_script_path)],
             capture_output=True,
@@ -363,7 +363,7 @@ def test_update_system_config_parsing_with_packages():
         "  name: mybox\n"
     )
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yml", delete=False, prefix="update-system-pkg-"
+        mode="w", suffix=".yaml", delete=False, prefix="update-system-pkg-"
     )
     tmp.write(config_content)
     tmp.close()
@@ -460,7 +460,7 @@ def test_update_system_config_parsing_booleans():
     """Test YAML boolean parsing (true/false variants)."""
     config_content = "steamos: true\nforce_init: false\ndecky: false\n"
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yml", delete=False, prefix="update-system-bool-"
+        mode="w", suffix=".yaml", delete=False, prefix="update-system-bool-"
     )
     tmp.write(config_content)
     tmp.close()
@@ -483,46 +483,36 @@ def test_update_system_config_parsing_booleans():
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_update_system_run_flatpak_empty():
-    """Test that run_flatpak skips gracefully with no arguments."""
-    script = _source_function("run_flatpak") + "run_flatpak\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, f"run_flatpak should succeed: {result.stderr}"
-    assert "No flatpak" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+@pytest.mark.parametrize(
+    "func_name, expected_substrings",
+    [
+        ("run_flatpak", ["No flatpak", "skipping"]),
+        ("run_pacman", ["No pacman", "skipping"]),
+        ("aur_install", ["No AUR", "skipping"]),
+        ("run_npm", ["No npm", "skipping"]),
+        ("run_snap", ["No snap", "skipping"]),
+        ("run_apt", ["No apt", "skipping"]),
+        ("run_dnf", ["No dnf", "skipping"]),
+        ("run_brew", ["No brew", "skipping"]),
+        ("run_nix", ["No nix", "skipping"]),
+        ("run_cargo", ["No cargo", "skipping"]),
+        ("run_go", ["No go", "skipping"]),
+    ],
 )
-def test_update_system_run_pacman_empty():
-    """Test that run_pacman skips gracefully with no arguments."""
-    script = _source_function("run_pacman") + "run_pacman\n"
+def test_update_system_empty_run(
+    func_name: str, expected_substrings: list[str]
+) -> None:
+    """Test that a run_* function skips gracefully with no arguments."""
+    script = _source_function(func_name) + f"{func_name}\n"
     result = subprocess.run(
         ["/bin/bash", "-c", script],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, f"run_pacman should succeed: {result.stderr}"
-    assert "No pacman" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_aur_install_empty():
-    """Test that aur_install skips gracefully with no arguments."""
-    script = _source_function("aur_install") + "aur_install\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
+    assert result.returncode == 0, f"{func_name} should succeed: {result.stderr}"
+    assert any(
+        s in result.stdout or s in result.stdout.lower() for s in expected_substrings
     )
-    assert result.returncode == 0, f"aur_install should succeed: {result.stderr}"
-    assert "No AUR" in result.stdout or "skipping" in result.stdout.lower()
 
 
 @pytest.mark.skipif(
@@ -566,121 +556,103 @@ def test_update_system_setup_distrobox_empty():
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_update_system_run_npm_empty():
-    """Test that run_npm skips gracefully with no arguments."""
-    script = _source_function("run_npm") + "run_npm\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
+def test_run_snap_snapd_healthy():
+    """Test run_snap when snapd is already responsive."""
+    script = (
+        # Mock check_command to succeed
+        "check_command() { return 0; }\n"
+        # Mock snap to succeed (snapd responsive)
+        'snap() { [[ "$1" == "list" ]] && return 0; }\n'
+        # Source the run_snap function
+        + _source_function("run_snap")
+        # Call with a test package
+        + 'run_snap "test-pkg"\n'
     )
-    assert result.returncode == 0, f"run_npm should succeed: {result.stderr}"
-    assert "No npm" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_run_snap_empty():
-    """Test that run_snap skips gracefully with no arguments."""
-    script = _source_function("run_snap") + "run_snap\n"
     result = subprocess.run(
         ["/bin/bash", "-c", script],
         capture_output=True,
         text=True,
     )
     assert result.returncode == 0, f"run_snap should succeed: {result.stderr}"
-    assert "No snap" in result.stdout or "skipping" in result.stdout.lower()
+    assert "Installing snap packages" in result.stdout, (
+        f"Should proceed with installation. Got: {result.stdout}"
+    )
+    assert "test-pkg" in result.stdout, (
+        f"Should mention the package. Got: {result.stdout}"
+    )
 
 
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_update_system_run_apt_empty():
-    """Test that run_apt skips gracefully with no arguments."""
-    script = _source_function("run_apt") + "run_apt\n"
+def test_run_snap_snapd_starts_successfully():
+    """Test run_snap when snapd starts after being manually started."""
+    script = (
+        # Mock check_command to succeed
+        "check_command() { return 0; }\n"
+        # Mock snap: first call fails, second succeeds
+        "SNAP_CALL_COUNT=0\n"
+        "snap() {\n"
+        "  SNAP_CALL_COUNT=$((SNAP_CALL_COUNT + 1))\n"
+        '  if [[ "$SNAP_CALL_COUNT" -eq 1 ]]; then\n'
+        "    return 1  # First call (health check) fails\n"
+        "  fi\n"
+        "  return 0  # Second call (retry) succeeds\n"
+        "}\n"
+        # Mock systemctl to succeed
+        'systemctl() { [[ "$1" == "start" && "$2" == "snapd" ]] && return 0; }\n'
+        # Mock sleep to be a no-op
+        "sleep() { true; }\n"
+        # Mock sudo to passthrough
+        'sudo() { "$@"; }\n'
+        # Source the run_snap function
+        + _source_function("run_snap")
+        # Call with a test package
+        + 'run_snap "test-pkg"\n'
+    )
     result = subprocess.run(
         ["/bin/bash", "-c", script],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, f"run_apt should succeed: {result.stderr}"
-    assert "No apt" in result.stdout or "skipping" in result.stdout.lower()
+    assert result.returncode == 0, f"run_snap should succeed: {result.stderr}"
+    assert "snapd daemon not responding" in result.stdout, (
+        f"Should detect snapd is down. Got: {result.stdout}"
+    )
+    assert "snapd daemon started successfully" in result.stdout, (
+        f"Should report successful start. Got: {result.stdout}"
+    )
+    assert "test-pkg" in result.stdout, (
+        f"Should install the package after starting snapd. Got: {result.stdout}"
+    )
 
 
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_update_system_run_dnf_empty():
-    """Test that run_dnf skips gracefully with no arguments."""
-    script = _source_function("run_dnf") + "run_dnf\n"
+def test_run_snap_snapd_unrecoverable():
+    """Test run_snap when snapd cannot be started."""
+    script = (
+        # Mock check_command to succeed
+        "check_command() { return 0; }\n"
+        # Mock snap to always fail
+        "snap() { return 1; }\n"
+        # Mock sleep to be a no-op
+        "sleep() { true; }\n"
+        # Source the run_snap function (no systemctl or service available)
+        + _source_function("run_snap")
+        # Call with a test package
+        + 'run_snap "test-pkg"\n'
+    )
     result = subprocess.run(
         ["/bin/bash", "-c", script],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, f"run_dnf should succeed: {result.stderr}"
-    assert "No dnf" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_run_brew_empty():
-    """Test that run_brew skips gracefully with no arguments."""
-    script = _source_function("run_brew") + "run_brew\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
+    assert result.returncode == 1, f"run_snap should fail: {result.stdout}"
+    assert "snapd daemon could not be started" in result.stdout, (
+        f"Should report failure to start snapd. Got: {result.stdout}"
     )
-    assert result.returncode == 0, f"run_brew should succeed: {result.stderr}"
-    assert "No brew" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_run_nix_empty():
-    """Test that run_nix skips gracefully with no arguments."""
-    script = _source_function("run_nix") + "run_nix\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, f"run_nix should succeed: {result.stderr}"
-    assert "No nix" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_run_cargo_empty():
-    """Test that run_cargo skips gracefully with no arguments."""
-    script = _source_function("run_cargo") + "run_cargo\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, f"run_cargo should succeed: {result.stderr}"
-    assert "No cargo" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_run_go_empty():
-    """Test that run_go skips gracefully with no arguments."""
-    script = _source_function("run_go") + "run_go\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, f"run_go should succeed: {result.stderr}"
-    assert "No go" in result.stdout or "skipping" in result.stdout.lower()
 
 
 @pytest.mark.skipif(

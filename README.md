@@ -37,7 +37,7 @@ Run the setup script to automatically add the source line to your ~/.bashrc:
 With custom configuration:
 
 ```bash
-./setup.sh /path/to/config.yml
+./setup.sh /path/to/config.yaml
 ```
 
 **Manual setup:**
@@ -45,14 +45,14 @@ With custom configuration:
 Add the following line to your ~/.bashrc (config file is required):
 
 ```bash
-source /path/to/useful-shell-scripts/bash/bashrc-extra.sh /path/to/config.yml
+source /path/to/useful-shell-scripts/bash/bashrc-extra.sh /path/to/config.yaml
 ```
 
-The script sets the `FILE_BASHRC_CONFIG` environment variable to the specified config file path. The config file argument is required when sourcing bashrc-extra.sh directly, but optional when using setup.sh (defaults to `config.example.yml`). Both scripts validate that the config file exists before proceeding and resolve relative paths intelligently (checking current directory first, then script directory).
+The script sets the `FILE_BASHRC_CONFIG` environment variable to the specified config file path. The config file argument is required when sourcing bashrc-extra.sh directly, but optional when using setup.sh (defaults to `config.example.yaml`). Both scripts validate that the config file exists before proceeding and resolve relative paths intelligently (checking current directory first, then script directory).
 
 ### Configuration File
 
-The config file (YAML format) supports bookmark shortcuts and venv configuration. Example `config.example.yml`:
+The config file (YAML format) supports bookmark shortcuts and venv configuration. Example `config.example.yaml`:
 
 ```yaml
 bookmarks:
@@ -119,12 +119,12 @@ Automatically adds the bashrc-extra.sh source line to your ~/.bashrc for easy in
 With custom configuration (optional):
 
 ```bash
-./setup.sh /path/to/config.yml
+./setup.sh /path/to/config.yaml
 ```
 
 **What it does:**
 - Calculates the absolute path to bashrc-extra.sh
-- Defaults to `config.example.yml` if no config file is specified
+- Defaults to `config.example.yaml` if no config file is specified
 - Resolves config file paths: absolute paths used as-is, relative paths checked from current directory first, then from script directory
 - Validates that the config file exists before proceeding
 - Adds `source "/absolute/path/to/bashrc-extra.sh /absolute/path/to/config"` to ~/.bashrc

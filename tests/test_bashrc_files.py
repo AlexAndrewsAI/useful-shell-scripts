@@ -20,7 +20,7 @@ def bashrc_files_script_path():
 @pytest.fixture
 def temp_config_file():
     """Create a temporary config file for testing."""
-    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False)
+    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write("# Test config file\n")
     temp_file.write("bookmarks:\n")
     temp_file.write('  test1: "/tmp/test1"\n')
@@ -386,7 +386,7 @@ def test_bashrc_files_no_bookmarks_without_yq(bashrc_files_script_path):
         [
             "/bin/bash",
             "-c",
-            f"FILE_BASHRC_CONFIG=/tmp/test.yml source {bashrc_files_script_path} && alias goto-test 2>/dev/null || echo 'ALIAS_NOT_FOUND'",
+            f"FILE_BASHRC_CONFIG=/tmp/test.yaml source {bashrc_files_script_path} && alias goto-test 2>/dev/null || echo 'ALIAS_NOT_FOUND'",
         ],
         capture_output=True,
         text=True,
@@ -576,7 +576,7 @@ def test_bashrc_files_devnull_redirect_function_execution(bashrc_files_script_pa
 def test_bashrc_files_bookmark_env_var(bashrc_files_script_path, temp_bookmark_dirs):
     """Test that bookmarks create environment variables with DIR_ prefix."""
     # Create a temporary config file
-    temp_config = tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False)
+    temp_config = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_config.write("# Test config file\n")
     temp_config.write("bookmarks:\n")
     temp_config.write(f'  test1: "{temp_bookmark_dirs["test1"]}"\n')
@@ -631,7 +631,7 @@ def test_bashrc_files_bookmark_env_var_naming_convention(
 ):
     """Test that bookmark names with hyphens create env vars with underscores."""
     # Create a temporary config file with hyphenated bookmark name
-    temp_config = tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False)
+    temp_config = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_config.write("# Test config file\n")
     temp_config.write("bookmarks:\n")
     temp_config.write(f'  my-special-folder: "{temp_bookmark_dirs["test1"]}"\n')

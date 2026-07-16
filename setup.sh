@@ -10,7 +10,7 @@ SCRIPT_PATH="$SCRIPT_DIR/bash/bashrc-extra.sh"
 
 # Default to example config if not provided
 if [[ -z "$CONFIG_FILE" ]]; then
-    CONFIG_FILE="$SCRIPT_DIR/config.example.yml"
+    CONFIG_FILE="$SCRIPT_DIR/config.example.yaml"
 fi
 
 # Resolve config file path
