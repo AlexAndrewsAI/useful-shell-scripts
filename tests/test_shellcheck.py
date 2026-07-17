@@ -12,6 +12,7 @@ SHELL_FILES = [
     "bash/bashrc-files.sh",
     "bash/bashrc-processes.sh",
     "bash/git-copy-bare.sh",
+    "bash/git-lite-mirror.sh",
     "bash/git2linksremote.sh",
     "bash/git2markdown.sh",
     "bash/ports-in-use.sh",
