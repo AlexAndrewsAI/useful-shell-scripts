@@ -27,7 +27,7 @@ def temp_config_file():
     os.makedirs(test1_dir)
     os.makedirs(test2_dir)
 
-    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False)
+    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write("# Test config file\n")
     temp_file.write("bookmarks:\n")
     temp_file.write(f'  test1: "{test1_dir}"\n')
@@ -114,7 +114,7 @@ def test_bashrc_extra_relative_path_exists(
 ):
     """Test bashrc-extra.sh with relative config file path that exists."""
     # Change to temp directory and create config there
-    config_name = "test_config.yml"
+    config_name = "test_config.yaml"
     config_path = os.path.join(temp_home, config_name)
 
     # Copy temp config to temp home
@@ -149,7 +149,7 @@ def test_bashrc_extra_nonexistent_config(bashrc_extra_script_path):
         [
             "/bin/bash",
             "-c",
-            f"source {bashrc_extra_script_path} /nonexistent/config.yml",
+            f"source {bashrc_extra_script_path} /nonexistent/config.yaml",
         ],
         capture_output=True,
         text=True,

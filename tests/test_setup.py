@@ -20,7 +20,7 @@ def setup_script_path():
 @pytest.fixture
 def example_config_path():
     """Path to the example config file."""
-    return Path(__file__).parent.parent / "config.example.yml"
+    return Path(__file__).parent.parent / "config.example.yaml"
 
 
 @pytest.fixture
@@ -176,7 +176,7 @@ def test_setup_script_nonexistent_config(setup_script_path, temp_home, monkeypat
 
     # Run setup script with non-existent config
     result = subprocess.run(
-        ["/bin/bash", str(setup_script_path), "/nonexistent/config.yml"],
+        ["/bin/bash", str(setup_script_path), "/nonexistent/config.yaml"],
         capture_output=True,
         text=True,
         env={**os.environ, "HOME": temp_home},

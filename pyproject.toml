@@ -21,45 +21,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "bitmath>=2.1.1",
-    "black>=26.5.1",
-    "desktop-notifier>=6.2.0",
-    "cryptography==49.0.0",
-    "edge-tts>=7.2.8",
-    "eyed3>=0.9.6",
-    "hmmlearn>=0.2.5",
-    "imblearn>=0.0",
-    "keyboard>=0.13.5",
-    "matplotlib>=3.4.2",
-    "numpy>=1.20.3",
-    "openpyxl>=3.1.5",
-    "pandas>=1.2.4",
-    "pillow>=12.2.0",
-    "pipreqs>=0.5.0",
-    "plotly>=5.3.1",
-    "psutil>=7.2.2",
-    "pyaudioanalysis>=0.3.14",
-    "pyautogui>=0.9.54",
-    "pycryptomator>=1.15",
-    "pydantic>=2.13.4",
-    "pydub>=0.25.1",
-    "pykeepass>=4.1.1.post1",
-    "pynput==1.6.0",
-    "pyperclip>=1.11.0",
-    "python-package-template",
     "pyyaml>=6.0.3",
-    "rclone-python>=0.1.24",
-    "requests>=2.34.2",
-    "schedule>=1.2.2",
-    "scikit-learn>=0.24.2",
-    "scipy>=1.6.3",
-    "selenium>=4.44.0",
-    "simplejson>=3.16.0",
-    "tqdm>=4.52.0",
-    "mount-encrypted-filesystem",
-    "backup-keepass-unlock",
-    "scheduler-run",
-    "timetracker-utils",
 ]
 
 [dependency-groups]
@@ -81,12 +43,6 @@ build-backend = "hatchling.build"
 path = "useful_shell_scripts/__init__.py"
 
 [tool.uv.sources]
-keepass-wrapper = { git = "https://github.com/AlexAndrewsAI/keepass-wrapper.git" }
-python-package-template = { git = "https://github.com/AlexAndrewsAI/python-package-template.git" }
-mount-encrypted-filesystem = { git = "https://github.com/AlexAndrewsAI/mount-encrypted-filesystem.git" }
-backup-keepass-unlock = { git = "https://github.com/AlexAndrewsAI/backup-keepass-unlock.git" }
-scheduler-run = { git = "https://github.com/AlexAndrewsAI/scheduler-run.git", branch = "main" }
-timetracker-utils = { git = "https://github.com/AlexAndrewsAI/timetracker-utils.git" }
 
 [project.urls]
 Homepage = "https://github.com/AlexAndrewsAI/useful-shell-scripts"
@@ -129,7 +85,8 @@ testpaths = ["tests"]
 addopts = "--cov=tests --cov-report=term-missing --cov-fail-under=80"  # 80% threshold balances quality with practicality for shell script test repo
 
 [tool.coverage.run]
-source = ["tests", "useful_shell_scripts"]  # Measure test coverage and any future Python package code (minimal package created to suppress coverage.py module-not-imported warning)
+source = ["tests", "useful_shell_scripts"]  # Measure test coverage and any future Python package code
+omit = ["useful-shell-scripts"]  # Project name (with hyphens) is not a valid Python module; omit to avoid coverage.py module-not-imported warning
 parallel = true  # Run coverage in parallel for faster execution
 
 [tool.coverage.report]

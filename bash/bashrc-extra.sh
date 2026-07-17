@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get script directory
-SCRIPT_DIR=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Parse positional argument (required)
 CONFIG_FILE="$1"

@@ -26,7 +26,7 @@ venv:
 # ============================================================================
 # This section contains configuration for system package management and setup.
 # Primarily used by update-system.sh for Steam Deck/SteamOS and Arch Linux.
-# Copy this file to config.yml and adjust to your needs.
+# Copy this file to config.yaml and adjust to your needs.
 # All package lists that were previously stored in requirements-*.txt
 # files now live in the sections below.
 
@@ -152,7 +152,7 @@ shell-exe:
 # These settings configure git identity across all repositories on the system.
 git:
   user.name: AlexAndrewsAI
-  user.email: alex.andrews.ai@protonmail.com
+  user.email: user@example.com
 
 # Distrobox container setup
 # Distrobox creates containers using podman/docker for running different

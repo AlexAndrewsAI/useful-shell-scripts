@@ -36,6 +36,14 @@ def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
         'echo "PACMAN_COUNT=${#CONFIG_PACMAN[@]}"\n'
         'echo "AUR_COUNT=${#CONFIG_AUR[@]}"\n'
         'echo "FLATPAK_COUNT=${#CONFIG_FLATPAK[@]}"\n'
+        'echo "NPM_COUNT=${#CONFIG_NPM[@]}"\n'
+        'echo "SNAP_COUNT=${#CONFIG_SNAP[@]}"\n'
+        'echo "APT_COUNT=${#CONFIG_APT[@]}"\n'
+        'echo "DNF_COUNT=${#CONFIG_DNF[@]}"\n'
+        'echo "BREW_COUNT=${#CONFIG_BREW[@]}"\n'
+        'echo "NIX_COUNT=${#CONFIG_NIX[@]}"\n'
+        'echo "CARGO_COUNT=${#CONFIG_CARGO[@]}"\n'
+        'echo "GO_COUNT=${#CONFIG_GO[@]}"\n'
     )
     result = subprocess.run(
         ["/bin/bash", "-c", script],
@@ -47,7 +55,7 @@ def _parse_yaml_config(config_path: str) -> subprocess.CompletedProcess[str]:
 
 def _source_function(func_name: str) -> str:
     """Build a bash script that sources a single function from update-system.sh."""
-    return f"source <(sed -n '/^{func_name}()/,/^}}/p' \"{UPDATE_SYSTEM}\")\n"
+    return f'_SOURCE_ONLY=true; source "{UPDATE_SYSTEM}"; declare -f {func_name}\n'
 
 
 @pytest.fixture
@@ -59,7 +67,7 @@ def update_system_script_path():
 @pytest.fixture
 def example_config_path():
     """Path to the example YAML config file."""
-    return SCRIPT_DIR / "update-system.example.yml"
+    return SCRIPT_DIR.parent / "config.example.yaml"
 
 
 @pytest.fixture
@@ -71,12 +79,20 @@ def minimal_config():
         "pacman: []\n"
         "aur: []\n"
         "flatpak: []\n"
-        "git: []\n"
+        "npm: []\n"
+        "snap: []\n"
+        "apt: []\n"
+        "dnf: []\n"
+        "brew: []\n"
+        "nix: []\n"
+        "cargo: []\n"
+        "go: []\n"
+        "git: {}\n"
         "decky: false\n"
-        "distrobox: []\n"
+        "distrobox: {}\n"
     )
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yml", delete=False, prefix="update-system-test-"
+        mode="w", suffix=".yaml", delete=False, prefix="update-system-test-"
     )
     tmp.write(config_content)
     tmp.close()
@@ -195,7 +211,7 @@ def test_update_system_config_dat_points_nowhere(update_system_script_path):
     with tempfile.TemporaryDirectory() as tmpdir:
         dat_path = os.path.join(tmpdir, ".config-location.dat")
         with open(dat_path, "w") as f:
-            f.write("/nonexistent/config.yml")
+            f.write("/nonexistent/config.yaml")
         result = subprocess.run(
             ["/bin/bash", str(update_system_script_path)],
             capture_output=True,
@@ -295,6 +311,14 @@ def test_update_system_config_parsing_minimal(minimal_config):
     assert "PACMAN_COUNT=0" in result.stdout
     assert "AUR_COUNT=0" in result.stdout
     assert "FLATPAK_COUNT=0" in result.stdout
+    assert "NPM_COUNT=0" in result.stdout
+    assert "SNAP_COUNT=0" in result.stdout
+    assert "APT_COUNT=0" in result.stdout
+    assert "DNF_COUNT=0" in result.stdout
+    assert "BREW_COUNT=0" in result.stdout
+    assert "NIX_COUNT=0" in result.stdout
+    assert "CARGO_COUNT=0" in result.stdout
+    assert "GO_COUNT=0" in result.stdout
 
 
 @pytest.mark.skipif(
@@ -313,6 +337,23 @@ def test_update_system_config_parsing_with_packages():
         "  - visual-studio-code-bin\n"
         "flatpak:\n"
         "  - org.mozilla.firefox\n"
+        "npm:\n"
+        "  - typescript\n"
+        "  - eslint\n"
+        "snap:\n"
+        "  - vscode\n"
+        "apt:\n"
+        "  - build-essential\n"
+        "dnf:\n"
+        "  - neovim\n"
+        "brew:\n"
+        "  - htop\n"
+        "nix:\n"
+        "  - ripgrep\n"
+        "cargo:\n"
+        "  - bat\n"
+        "go:\n"
+        "  - github.com/cli/cli/v2/cmd/gh\n"
         "git:\n"
         "  user.name: TestUser\n"
         "  user.email: test@example.com\n"
@@ -322,7 +363,7 @@ def test_update_system_config_parsing_with_packages():
         "  name: mybox\n"
     )
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yml", delete=False, prefix="update-system-pkg-"
+        mode="w", suffix=".yaml", delete=False, prefix="update-system-pkg-"
     )
     tmp.write(config_content)
     tmp.close()
@@ -344,11 +385,28 @@ def test_update_system_config_parsing_with_packages():
             'echo "PACMAN_COUNT=${#CONFIG_PACMAN[@]}"\n'
             'echo "AUR_COUNT=${#CONFIG_AUR[@]}"\n'
             'echo "FLATPAK_COUNT=${#CONFIG_FLATPAK[@]}"\n'
+            'echo "NPM_COUNT=${#CONFIG_NPM[@]}"\n'
+            'echo "SNAP_COUNT=${#CONFIG_SNAP[@]}"\n'
+            'echo "APT_COUNT=${#CONFIG_APT[@]}"\n'
+            'echo "DNF_COUNT=${#CONFIG_DNF[@]}"\n'
+            'echo "BREW_COUNT=${#CONFIG_BREW[@]}"\n'
+            'echo "NIX_COUNT=${#CONFIG_NIX[@]}"\n'
+            'echo "CARGO_COUNT=${#CONFIG_CARGO[@]}"\n'
+            'echo "GO_COUNT=${#CONFIG_GO[@]}"\n'
             'echo "PACMAN_0=${CONFIG_PACMAN[0]}"\n'
             'echo "PACMAN_1=${CONFIG_PACMAN[1]}"\n'
             'echo "PACMAN_2=${CONFIG_PACMAN[2]}"\n'
             'echo "AUR_0=${CONFIG_AUR[0]}"\n'
             'echo "FLATPAK_0=${CONFIG_FLATPAK[0]}"\n'
+            'echo "NPM_0=${CONFIG_NPM[0]}"\n'
+            'echo "NPM_1=${CONFIG_NPM[1]}"\n'
+            'echo "SNAP_0=${CONFIG_SNAP[0]}"\n'
+            'echo "APT_0=${CONFIG_APT[0]}"\n'
+            'echo "DNF_0=${CONFIG_DNF[0]}"\n'
+            'echo "BREW_0=${CONFIG_BREW[0]}"\n'
+            'echo "NIX_0=${CONFIG_NIX[0]}"\n'
+            'echo "CARGO_0=${CONFIG_CARGO[0]}"\n'
+            'echo "GO_0=${CONFIG_GO[0]}"\n'
             'echo "GIT_USER_NAME=$CONFIG_GIT_USER_NAME"\n'
             'echo "GIT_USER_EMAIL=$CONFIG_GIT_USER_EMAIL"\n'
             'echo "DISTROBOX_IMAGE=$CONFIG_DISTROBOX_IMAGE"\n'
@@ -370,6 +428,23 @@ def test_update_system_config_parsing_with_packages():
         assert "AUR_0=visual-studio-code-bin" in result.stdout
         assert "FLATPAK_COUNT=1" in result.stdout
         assert "FLATPAK_0=org.mozilla.firefox" in result.stdout
+        assert "NPM_COUNT=2" in result.stdout
+        assert "NPM_0=typescript" in result.stdout
+        assert "NPM_1=eslint" in result.stdout
+        assert "SNAP_COUNT=1" in result.stdout
+        assert "SNAP_0=vscode" in result.stdout
+        assert "APT_COUNT=1" in result.stdout
+        assert "APT_0=build-essential" in result.stdout
+        assert "DNF_COUNT=1" in result.stdout
+        assert "DNF_0=neovim" in result.stdout
+        assert "BREW_COUNT=1" in result.stdout
+        assert "BREW_0=htop" in result.stdout
+        assert "NIX_COUNT=1" in result.stdout
+        assert "NIX_0=ripgrep" in result.stdout
+        assert "CARGO_COUNT=1" in result.stdout
+        assert "CARGO_0=bat" in result.stdout
+        assert "GO_COUNT=1" in result.stdout
+        assert "GO_0=github.com/cli/cli/v2/cmd/gh" in result.stdout
         assert "GIT_USER_NAME=TestUser" in result.stdout
         assert "GIT_USER_EMAIL=test@example.com" in result.stdout
         assert "DISTROBOX_IMAGE=ubuntu:24.04" in result.stdout
@@ -385,7 +460,7 @@ def test_update_system_config_parsing_booleans():
     """Test YAML boolean parsing (true/false variants)."""
     config_content = "steamos: true\nforce_init: false\ndecky: false\n"
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yml", delete=False, prefix="update-system-bool-"
+        mode="w", suffix=".yaml", delete=False, prefix="update-system-bool-"
     )
     tmp.write(config_content)
     tmp.close()
@@ -408,46 +483,36 @@ def test_update_system_config_parsing_booleans():
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_update_system_run_flatpak_empty():
-    """Test that run_flatpak skips gracefully with no arguments."""
-    script = _source_function("run_flatpak") + "run_flatpak\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, f"run_flatpak should succeed: {result.stderr}"
-    assert "No flatpak" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+@pytest.mark.parametrize(
+    "func_name, expected_substrings",
+    [
+        ("run_flatpak", ["No flatpak", "skipping"]),
+        ("run_pacman", ["No pacman", "skipping"]),
+        ("aur_install", ["No AUR", "skipping"]),
+        ("run_npm", ["No npm", "skipping"]),
+        ("run_snap", ["No snap", "skipping"]),
+        ("run_apt", ["No apt", "skipping"]),
+        ("run_dnf", ["No dnf", "skipping"]),
+        ("run_brew", ["No brew", "skipping"]),
+        ("run_nix", ["No nix", "skipping"]),
+        ("run_cargo", ["No cargo", "skipping"]),
+        ("run_go", ["No go", "skipping"]),
+    ],
 )
-def test_update_system_run_pacman_empty():
-    """Test that run_pacman skips gracefully with no arguments."""
-    script = _source_function("run_pacman") + "run_pacman\n"
+def test_update_system_empty_run(
+    func_name: str, expected_substrings: list[str]
+) -> None:
+    """Test that a run_* function skips gracefully with no arguments."""
+    script = _source_function(func_name) + f"{func_name}\n"
     result = subprocess.run(
         ["/bin/bash", "-c", script],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, f"run_pacman should succeed: {result.stderr}"
-    assert "No pacman" in result.stdout or "skipping" in result.stdout.lower()
-
-
-@pytest.mark.skipif(
-    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
-)
-def test_update_system_aur_install_empty():
-    """Test that aur_install skips gracefully with no arguments."""
-    script = _source_function("aur_install") + "aur_install\n"
-    result = subprocess.run(
-        ["/bin/bash", "-c", script],
-        capture_output=True,
-        text=True,
+    assert result.returncode == 0, f"{func_name} should succeed: {result.stderr}"
+    assert any(
+        s in result.stdout or s in result.stdout.lower() for s in expected_substrings
     )
-    assert result.returncode == 0, f"aur_install should succeed: {result.stderr}"
-    assert "No AUR" in result.stdout or "skipping" in result.stdout.lower()
 
 
 @pytest.mark.skipif(
@@ -486,3 +551,123 @@ def test_update_system_setup_distrobox_empty():
     )
     assert result.returncode == 0, f"setup_distrobox should succeed: {result.stderr}"
     assert "Distrobox" in result.stdout or "skipping" in result.stdout.lower()
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_run_snap_snapd_healthy():
+    """Test run_snap when snapd is already responsive."""
+    script = (
+        # Mock check_command to succeed
+        "check_command() { return 0; }\n"
+        # Mock snap to succeed (snapd responsive)
+        'snap() { [[ "$1" == "list" ]] && return 0; }\n'
+        # Source the run_snap function
+        + _source_function("run_snap")
+        # Call with a test package
+        + 'run_snap "test-pkg"\n'
+    )
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_snap should succeed: {result.stderr}"
+    assert "Installing snap packages" in result.stdout, (
+        f"Should proceed with installation. Got: {result.stdout}"
+    )
+    assert "test-pkg" in result.stdout, (
+        f"Should mention the package. Got: {result.stdout}"
+    )
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_run_snap_snapd_starts_successfully():
+    """Test run_snap when snapd starts after being manually started."""
+    script = (
+        # Mock check_command to succeed
+        "check_command() { return 0; }\n"
+        # Mock snap: first call fails, second succeeds
+        "SNAP_CALL_COUNT=0\n"
+        "snap() {\n"
+        "  SNAP_CALL_COUNT=$((SNAP_CALL_COUNT + 1))\n"
+        '  if [[ "$SNAP_CALL_COUNT" -eq 1 ]]; then\n'
+        "    return 1  # First call (health check) fails\n"
+        "  fi\n"
+        "  return 0  # Second call (retry) succeeds\n"
+        "}\n"
+        # Mock systemctl to succeed
+        'systemctl() { [[ "$1" == "start" && "$2" == "snapd" ]] && return 0; }\n'
+        # Mock sleep to be a no-op
+        "sleep() { true; }\n"
+        # Mock sudo to passthrough
+        'sudo() { "$@"; }\n'
+        # Source the run_snap function
+        + _source_function("run_snap")
+        # Call with a test package
+        + 'run_snap "test-pkg"\n'
+    )
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"run_snap should succeed: {result.stderr}"
+    assert "snapd daemon not responding" in result.stdout, (
+        f"Should detect snapd is down. Got: {result.stdout}"
+    )
+    assert "snapd daemon started successfully" in result.stdout, (
+        f"Should report successful start. Got: {result.stdout}"
+    )
+    assert "test-pkg" in result.stdout, (
+        f"Should install the package after starting snapd. Got: {result.stdout}"
+    )
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_run_snap_snapd_unrecoverable():
+    """Test run_snap when snapd cannot be started."""
+    script = (
+        # Mock check_command to succeed
+        "check_command() { return 0; }\n"
+        # Mock snap to always fail
+        "snap() { return 1; }\n"
+        # Mock sleep to be a no-op
+        "sleep() { true; }\n"
+        # Source the run_snap function (no systemctl or service available)
+        + _source_function("run_snap")
+        # Call with a test package
+        + 'run_snap "test-pkg"\n'
+    )
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, f"run_snap should fail: {result.stdout}"
+    assert "snapd daemon could not be started" in result.stdout, (
+        f"Should report failure to start snapd. Got: {result.stdout}"
+    )
+
+
+@pytest.mark.skipif(
+    not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
+)
+def test_update_system_check_command_missing():
+    """Test that check_command returns 1 for missing commands."""
+    script = (
+        _source_function("check_command")
+        + "check_command nonexistent_command_xyz123 npm\n"
+    )
+    result = subprocess.run(
+        ["/bin/bash", "-c", script],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, "check_command should return 1 for missing command"
+    assert "not found" in result.stdout.lower() or "skipping" in result.stdout.lower()

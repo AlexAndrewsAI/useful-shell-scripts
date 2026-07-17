@@ -2,11 +2,8 @@
 # Set DIR_PYTHON_VENV from config file
 if [ "$(command -v yq)" ] && [ -n "$FILE_BASHRC_CONFIG" ] && [ -f "$FILE_BASHRC_CONFIG" ]; then
     # Check if venv is configured as an object with location field
-    venv_location=$(yq '.venv.location' "$FILE_BASHRC_CONFIG" 2>/dev/null)
+    venv_location=$(yq -r '.venv.location' "$FILE_BASHRC_CONFIG" 2>/dev/null)
     if [[ -n "$venv_location" && "$venv_location" != "null" ]]; then
-        # Strip leading and trailing double quotes
-        venv_location="${venv_location#\"}"
-        venv_location="${venv_location%\"}"
 
         # Resolve venv path relative to config file directory
         config_dir=$(dirname "$FILE_BASHRC_CONFIG")
@@ -25,7 +22,7 @@ if [ "$(command -v uv)" ]; then
     # Run complete test suite with coverage and formatting
     # Uses current directory name as project name (override with COV_PROJECT env var)
     # Steps: activate venv, sync dev dependencies, format, lint, test with coverage, type check
-    alias uv-tests="source .venv/bin/activate; uv sync --dev; uv run ruff format; uv run ruff check --fix; uv run pytest --cov=\${COV_PROJECT:-\$(basename \$(pwd))} --cov-report term-missing; uv run mypy ."
+    alias uv-tests="UV_PROJECT_ENVIRONMENT=.venv;  uv run pytest; uv run pip-audit; uv run prek -a"
     # Create virtual environment in current directory if missing and activate it
     alias venv-here="[ ! -d .venv ] && uv venv; source .venv/bin/activate"
     # Display the current virtual environment path
@@ -47,6 +44,8 @@ if [ "$(command -v uv)" ]; then
             echo "uv is not installed — install it first (https://docs.astral.sh/uv)" >&2
             return 1
         fi
+        export UV_PROJECT_ENVIRONMENT=.venv
+        uv sync --dev
         uv run prek install
         uv run prek run --all-files
     }
@@ -116,6 +115,25 @@ if [ "$(command -v git)" ]; then
     alias git-tree-files="git ls-tree -r --name-only HEAD | tree -a --fromfile"
     alias git-current-branch="git rev-parse --abbrev-ref HEAD"
     alias git-merge-dry-run="git merge --no-commit --no-ff"
+    alias git-email="git config user.email"
+    alias git-name="git config user.name"
+    alias git-main-pull="git checkout main && git pull"
+
+    git-ssh-new() {
+        email="$(git config --global --get user.email || true)"
+        if [ -z "$email" ]; then
+            echo "Error: git config user.email not set." >&2
+            return 1
+        fi
+
+
+
+        ssh-keygen -t ed25519 -C "$email"
+        echo "====================== Public key ==========================="
+        cat "$HOME/.ssh/id_ed25519.pub"
+        echo "Create new ssh key: https://github.com/settings/ssh/new"
+    }
+
 
     # Stage all changes and commit with timestamp message
     # Usage: git-update
@@ -123,6 +141,48 @@ if [ "$(command -v git)" ]; then
         git add .
         git commit -m "update-$(datetime)"
     }
+
+    git-web() {
+        local remote_url url user repo
+
+        echo "Fetching remote URL..."
+        remote_url="$(
+            git remote -v 2>/dev/null |
+            awk '$3 ~ /^\(fetch\)$/ {print $2; exit}
+                {if(!found && $3 ~ /^\(push\)$/){found=1; print $2; exit}}'
+        )"
+
+        if [ -z "$remote_url" ]; then
+            echo "No remote URL found, opening GitHub..."
+            xdg-open "https://github.com" >/dev/null 2>&1 || open "https://github.com"
+            return 0
+        fi
+
+        echo "Parsing remote URL: $remote_url"
+        url=""
+        if [[ "$remote_url" =~ ^[^@]+@[^:]+:(.+)$ ]]; then
+            url="${BASH_REMATCH[1]}"
+        elif [[ "$remote_url" =~ ^ssh://[^/]+/(.+)$ ]]; then
+            url="${BASH_REMATCH[1]}"
+        elif [[ "$remote_url" =~ ^https?://[^/]+/(.+)$ ]]; then
+            url="${BASH_REMATCH[1]}"
+        fi
+
+        if [ -n "$url" ]; then
+            url="${url%.git}"
+            user="${url%%/*}"
+            repo="${url##*/}"
+        fi
+
+        if [ -z "$user" ] || [ -z "$repo" ] || [ "$user" = "$repo" ]; then
+            echo "Could not parse user/repo, opening GitHub..."
+            xdg-open "https://github.com" >/dev/null 2>&1 || open "https://github.com"
+        else
+            echo "Opening https://github.com/$user/$repo"
+            xdg-open "https://github.com/$user/$repo" >/dev/null 2>&1 || open "https://github.com/$user/$repo"
+        fi
+    }
+
 
     # Pull all remote branches and return to current branch
     # Usage: git-pull-all-branches
@@ -245,6 +305,7 @@ if [ "$(command -v docker)" ]; then
         images=$(docker images --format '{{.Repository}}:{{.Tag}}')
 
         # Loop through each image
+        # shellcheck disable=SC2086
         for image in $images; do
             # Check if the image has the "latest" tag
             image_name="${image%%:*}"
@@ -277,6 +338,7 @@ if [ "$(command -v kubectl)" ]; then
     # Usage: kubernetes-exec <pod_name_pattern>
     kubernetes-exec() {
         echo "$1"
+        # shellcheck disable=SC2086
         temp=$(kubectl get pods | grep "$1" | awk '{print $1}')
         echo "kubectl exec -it \"$temp\" bash"
         k exec -it "$temp" bash

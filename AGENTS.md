@@ -42,6 +42,7 @@ setup.sh                   # Setup script for bash integration
 - **Logging:** Use `logging` module only; never `print()`.
 - **Relative Paths:** Never use absolute paths in code.
 - **Shell Scripts:** Follow bash best practices; use pureshellcheck for validation.
+- **YAML Files:** Always use `.yaml` extension for YAML files. Never use `.yml`.
 
 ### Dependency & Configuration Management
 - **Adding/Removing Dependencies:** Use `uv add` / `uv remove` commands.
