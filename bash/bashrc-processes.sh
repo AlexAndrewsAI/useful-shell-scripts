@@ -114,15 +114,15 @@ pstoggle() {
 
 # Kill processes exceeding CPU threshold with specified signal
 # First argument is threshold CPU usage, rest are additional arguments for kill
-# Usage: process-kill-threshhold [threshold] [kill_args...]
-# Example: process-kill-threshhold 120 -SIGSTOP
-process-kill-threshhold() {
+# Usage: process-kill-threshold [threshold] [kill_args...]
+# Example: process-kill-threshold 120 -SIGSTOP
+process-kill-threshold() {
     # From stackoverflow, Marcel Kohls https://stackoverflow.com/questions/187804/automatically-kill-process-that-consume-too-much-memory-or-stall-on-linux
     if [ -z "$1" ]
     then
         maxlimit=110
     else
-    maxlimit=$1
+        maxlimit=$1
     fi
 
     shift  # This removes the first argument from the list

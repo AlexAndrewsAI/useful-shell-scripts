@@ -25,6 +25,8 @@ import shlex
 import sys
 from typing import Any
 
+log = logging.getLogger(__name__)
+
 
 def parse_scalar(s: str) -> str | bool | None:
     """Convert a raw YAML scalar string into a Python value.
@@ -367,8 +369,6 @@ def parse_and_emit(path: str) -> list[str]:
     root, _ = parse_mapping(text.splitlines(), 0, -1)
     return emit(root, "")
 
-
-log = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

@@ -282,7 +282,7 @@ If `yq` is installed and a config file is provided with a `venv` field:
 - `psfind` - Advanced process finding/killing
 - `psnice` - Renice processes
 - `pstoggle` - Toggle process run state (SIGSTOP/SIGCONT)
-- `process-kill-threshhold` - Kill processes exceeding CPU threshold
+- `process-kill-threshold` - Kill processes exceeding CPU threshold
 - `repeat` - Repeat commands at intervals
 
 ### Audio/Media
@@ -301,28 +301,22 @@ If `yq` is installed and a config file is provided with a `venv` field:
 
 ## Python Environment
 
-The `pyproject.toml` in the repository root defines a comprehensive development environment suitable for data science, automation, and general development. The Python package `useful_shell_scripts/` contains minimal source code for testing and validation utilities.
+The `pyproject.toml` at the repository root defines a minimal Python environment focused on testing and validation of the shell scripts.
 
-### Core Dependencies
+### Runtime Dependency
 
-**Data Science:**
-- pandas, numpy, scipy, scikit-learn
-- matplotlib, plotly
+- **PyYAML >= 6.0.3** — used by `python/yaml_parser.py` for parsing configuration files
 
-**Audio Processing:**
-- pydub, pyaudioanalysis, edge-tts, eyed3
+### Dev Dependencies
 
-**Automation:**
-- pyautogui, keyboard, pynput, selenium
+All dev tools are managed via `uv` dependency groups:
 
-**Security:**
-- cryptography, pycryptomator, pykeepass
-
-**File Handling:**
-- openpyxl, pillow, bitmath
-
-**Development:**
-- black, pydantic, tqdm
+- **Testing:** pytest, pytest-cov
+- **Linting & Formatting:** ruff
+- **Type Checking:** mypy
+- **Shell Script Linting:** pureshellcheck
+- **Security Audit:** pip-audit
+- **Git Hooks:** prek
 
 ### Setup
 

@@ -136,45 +136,55 @@ def test_ports_in_use_ss_check(ports_in_use_script_path):
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
 def test_ports_in_use_mocked_empty_output(ports_in_use_script_path):
-    """Test ports-in-use.sh with mocked empty output."""
-    # Mock subprocess.run to return empty output
-    with mock.patch("subprocess.run") as mock_run:
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=["/bin/bash", str(ports_in_use_script_path)],
-            returncode=0,
-            stdout="",
-            stderr="",
-        )
+    """Test ports-in-use.sh when ss produces no listening ports."""
+    import shutil
 
-        result = subprocess.run(
-            ["/bin/bash", str(ports_in_use_script_path)], capture_output=True, text=True
+    mock_dir = tempfile.mkdtemp()
+    ss_script = os.path.join(mock_dir, "ss")
+    with open(ss_script, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write("# Mock ss that returns header-only output (no port data)\n")
+        f.write(
+            'echo "Netid State  Recv-Q Send-Q  Local Address:Port  Peer Address:Port"\n'
         )
+    os.chmod(ss_script, 0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{mock_dir}:{env['PATH']}"
 
-        assert result.returncode == 0
-        assert result.stdout == ""
+    try:
+        with mock.patch("tests.test_ports_in_use.check_ss_present", return_value=True):
+            result = subprocess.run(
+                ["/bin/bash", str(ports_in_use_script_path)],
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+        assert result.stdout.strip() == "", (
+            "Should produce empty output when no ports are listening"
+        )
+    finally:
+        if os.path.exists(mock_dir):
+            shutil.rmtree(mock_dir)
 
 
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_ports_in_use_mocked_with_ports(ports_in_use_script_path):
-    """Test ports-in-use.sh with mocked port output."""
-    # Mock subprocess.run to return port output
-    with mock.patch("subprocess.run") as mock_run:
-        mock_run.return_value = subprocess.CompletedProcess(
-            args=["/bin/bash", str(ports_in_use_script_path)],
-            returncode=0,
-            stdout="80 443 8080 ",
-            stderr="",
-        )
-
+def test_ports_in_use_mocked_with_ports(ports_in_use_script_path, mock_ss_env):
+    """Test ports-in-use.sh with mocked ss that produces port output."""
+    with mock.patch("tests.test_ports_in_use.check_ss_present", return_value=True):
         result = subprocess.run(
-            ["/bin/bash", str(ports_in_use_script_path)], capture_output=True, text=True
+            ["/bin/bash", str(ports_in_use_script_path)],
+            capture_output=True,
+            text=True,
+            env=mock_ss_env,
         )
 
-        assert result.returncode == 0
-        assert "80" in result.stdout
-        assert "443" in result.stdout
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    assert "80" in result.stdout, "Output should contain port 80"
+    assert "443" in result.stdout, "Output should contain port 443"
 
 
 @pytest.mark.skipif(

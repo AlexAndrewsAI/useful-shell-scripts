@@ -1,5 +1,10 @@
 REVIEW.md
 
+
+node_modules
+package-lock.json
+package.json
+
 # General
 *.lock
 !uv.lock

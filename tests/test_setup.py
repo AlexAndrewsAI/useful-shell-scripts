@@ -45,10 +45,13 @@ def test_setup_script_exists(setup_script_path):
 
 
 def test_setup_script_executable(setup_script_path):
-    """Test that setup.sh is executable."""
-    # Note: We're not checking execute permissions here since git may not preserve them
-    # Instead, we'll test it can be executed with bash explicitly
-    pass
+    """Test that setup.sh is executable (can be run with bash)."""
+    result = subprocess.run(
+        ["/bin/bash", "-n", str(setup_script_path)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, f"setup.sh has syntax errors: {result.stderr}"
 
 
 @pytest.mark.skipif(

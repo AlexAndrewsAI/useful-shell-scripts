@@ -103,7 +103,7 @@ findgrep() {
     if [[ "$2" == "" ]]; then
         find . -type f -exec grep --color=always -H "$1"  {} \;
     else
-        find . -name "$1" -type f -exec grep  --color=always -H "$2" {} \;
+        find . -name "$2" -type f -exec grep --color=always -H "$1" {} \;
     fi
 }
 alias grepfind=findgrep
@@ -160,7 +160,7 @@ chmod-recursive-locked-user-only() {
     if [[ "$1" == "" ]]; then
         fls="."
     else
-        fls=$*
+        fls="$*"
     fi
     chmod -R go-wrx "$fls"
 }

@@ -168,23 +168,23 @@ def test_bashrc_processes_pstoggle_function_definition(bashrc_processes_script_p
 @pytest.mark.skipif(
     not check_bash_present(), reason="/bin/bash not found - skipping bash-related tests"
 )
-def test_bashrc_processes_process_kill_threshhold_function_definition(
+def test_bashrc_processes_process_kill_threshold_function_definition(
     bashrc_processes_script_path,
 ):
-    """Test that bashrc-processes.sh defines process-kill-threshhold function."""
+    """Test that bashrc-processes.sh defines process-kill-threshold function."""
     result = subprocess.run(
         [
             "/bin/bash",
             "-c",
-            f"source {bashrc_processes_script_path} && type process-kill-threshhold",
+            f"source {bashrc_processes_script_path} && type process-kill-threshold",
         ],
         capture_output=True,
         text=True,
     )
 
     assert result.returncode == 0, f"Script failed: {result.stderr}"
-    assert "process-kill-threshhold" in result.stdout, (
-        "process-kill-threshhold function should be defined"
+    assert "process-kill-threshold" in result.stdout, (
+        "process-kill-threshold function should be defined"
     )
 
 

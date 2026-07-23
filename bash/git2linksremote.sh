@@ -16,8 +16,17 @@
 #
 ################################################################################
 
+# Check if we are inside a git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Error: Not a git repository."
+    exit 1
+fi
+
 # Get the remote URL for 'origin'
-REMOTE_URL=$(git remote get-url origin)
+REMOTE_URL=$(git remote get-url origin 2>/dev/null) || {
+    echo "Error: Git remote 'origin' not found."
+    exit 1
+}
 
 # Clean the URL to ensure it is a web link
 # Remove '.git' from the end if it exists
@@ -31,7 +40,7 @@ fi
 # Get the current branch name
 BRANCH=$(git branch --show-current)
 
-# Check if we are actually in a git repo
+# Double-check branch is available
 if [ -z "$BRANCH" ]; then
     echo "Error: Not a git repository or no branch detected."
     exit 1
