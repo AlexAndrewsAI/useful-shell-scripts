@@ -70,13 +70,18 @@ if [ "$(command -v pacman)" ]; then
     # Install a package from AUR
     # Usage: aur-install <package_name>
     aur-install() {
-        home=$(pwd)
-        cd /tmp || return
-        rm -fr "$*"
-        git clone "https://aur.archlinux.org/$*.git"
-        cd "$*" || return
+        if [ -z "$1" ]; then
+            echo "Usage: aur-install <package_name>" >&2
+            return 1
+        fi
+        local pkg="$1"
+        local tmpdir
+        tmpdir="$(mktemp -d)" || return 1
+        git clone "https://aur.archlinux.org/${pkg}.git" "$tmpdir/$pkg"
+        cd "$tmpdir/$pkg" || return 1
         makepkg -si
-        cd "$home" || return
+        cd /tmp || return 1
+        rm -fr "$tmpdir"
     }
 fi
 #endregion Arch Linux utilities

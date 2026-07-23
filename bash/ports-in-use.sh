@@ -23,7 +23,7 @@ if ! command -v ss &> /dev/null; then
 fi
 
 # Display used ports
-ports=$(ss -tulnp | awk '{print $5}' | awk -F: '{print $2}' | grep -v '^$' | sort -n | uniq)
+ports=$(ss -tulnp | awk '{n=split($5,a,":"); if (a[n] ~ /^[0-9]+$/) print a[n]}' | sort -n | uniq)
 # Convert newlines to spaces for output (test requirement)
 if [ -n "$ports" ]; then
     (set -f; for p in $ports; do echo -n "$p "; done; echo)

@@ -24,6 +24,7 @@ bash/                      # Shell scripts for various utilities
   ├── bashrc-files.sh      # File operation utilities
   ├── bashrc-processes.sh  # Process management utilities
   ├── git-copy-bare.sh     # Git repository copying
+  ├── git-lite-mirror.sh   # Git lite mirror sync (.gitignore.lite hotswap)
   ├── git2linksremote.sh   # Git to markdown links
   ├── git2markdown.sh      # Git to markdown formatting
   ├── ports-in-use.sh      # Network port monitoring
